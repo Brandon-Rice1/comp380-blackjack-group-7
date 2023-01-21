@@ -65,6 +65,10 @@ public class Card {
 		return value;
 	}
 	
+	/**
+	 * 
+	 * @return the card's soft value
+	 */
 	public int getSoftValue() {
 		if (this.type != Cardtype.Ace) {
 			return this.value;

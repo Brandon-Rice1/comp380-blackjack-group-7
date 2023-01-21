@@ -20,6 +20,11 @@ import java.util.stream.Collectors;
  */
 public class Solver {
 	
+	/**
+	 * The current strategy for determining if we should hit or stay
+	 * @param input the raw csv input line
+	 * @return a properly formatted for csv line that includes our decision
+	 */
 	private static String strategy(String input) {
 		// initializes the card objects
 		String[] hexCards = input.split(",");
