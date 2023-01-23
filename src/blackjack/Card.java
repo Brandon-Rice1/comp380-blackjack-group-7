@@ -15,7 +15,7 @@ public class Card {
 	 * The face of the card (ie Ace, 1, ...)
 	 */
 	private final Cardtype type;
-	
+
 	/**
 	 * The black jack value of the card. Uses 1 for Ace.
 	 */
@@ -29,7 +29,7 @@ public class Card {
 			Map.entry(Cardtype.Five, 5), Map.entry(Cardtype.Six, 6), Map.entry(Cardtype.Seven, 7),
 			Map.entry(Cardtype.Eight, 8), Map.entry(Cardtype.Nine, 9), Map.entry(Cardtype.Ten, 10),
 			Map.entry(Cardtype.Jack, 10), Map.entry(Cardtype.Queen, 10), Map.entry(Cardtype.King, 10));
-	
+
 	/**
 	 * A map used to convert from hex notation integer value to card type.
 	 */
@@ -40,11 +40,13 @@ public class Card {
 			Map.entry(11, Cardtype.Jack), Map.entry(13, Cardtype.Queen), Map.entry(14, Cardtype.King));
 
 	/**
-	 * Creates a new card based off of the standard hex format for the class.
-	 * For example, the input 1F0B9 would create a card with the type Nine and value 9.
+	 * Creates a new card based off of the standard hex format for the class. For
+	 * example, the input 1F0B9 would create a card with the type Nine and value 9.
+	 * 
 	 * @param cardData the raw hexidecimal input as a string
 	 */
 	public Card(String cardData) {
+		// HexFormat converts the hex string for the card value to an integer
 		type = hex2type.get(HexFormat.fromHexDigits(cardData, 4, 5));
 		value = type2value.get(type);
 	}
@@ -64,7 +66,7 @@ public class Card {
 	public int getHardValue() {
 		return value;
 	}
-	
+
 	/**
 	 * 
 	 * @return the card's soft value

@@ -19,9 +19,10 @@ import java.util.stream.Collectors;
  *
  */
 public class Solver {
-	
+
 	/**
 	 * The current strategy for determining if we should hit or stay
+	 * 
 	 * @param input the raw csv input line
 	 * @return a properly formatted for csv line that includes our decision
 	 */
@@ -35,7 +36,7 @@ public class Solver {
 //			dealer = null;
 //		}
 		ArrayList<Card> cards = new ArrayList<>();
-		for(int i = 8; i < hexCards.length; i++) {
+		for (int i = 8; i < hexCards.length; i++) {
 			cards.add(new Card(hexCards[i]));
 		}
 		Hand hand = new Hand(cards);
@@ -54,7 +55,7 @@ public class Solver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.println(System.getProperty("user.dir") + "/src/testFiles/input.csv");
+		// gets the current file
 		File inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/input.csv");
 		if (!inputCSV.isFile()) {
 			System.out.println("File passed is not a file");
@@ -62,12 +63,13 @@ public class Solver {
 		}
 		BufferedReader readIn;
 		try {
-			 readIn = new BufferedReader(new FileReader(inputCSV));
+			readIn = new BufferedReader(new FileReader(inputCSV));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
+		// Read all of the lines in the input and execute the strategy on them.
 		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
 		try {
 			readIn.close();
@@ -76,6 +78,7 @@ public class Solver {
 			e.printStackTrace();
 			return;
 		}
+		// output the results to a new file
 		try {
 			FileWriter writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output.csv"));
 			writer.write(output);
