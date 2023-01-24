@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 /**
  * 
- * A representation of cards of out hand in blackjack.
+ * A representation of cards of our hand in blackjack.
  * 
  * @author Brandon
  *
