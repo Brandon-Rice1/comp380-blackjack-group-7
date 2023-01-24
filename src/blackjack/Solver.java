@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class Solver {
 
 	/**
-	 * The current strategy for determining if we should hit or stay
+	 * The naive strategy for determining if we should hit or stay
 	 * 
 	 * @param input the raw csv input line
 	 * @return a properly formatted for csv line that includes our decision
@@ -40,7 +40,7 @@ public class Solver {
 			cards.add(new Card(hexCards[i]));
 		}
 		Hand hand = new Hand(cards);
-		// cuurent strategy implementation
+		// current strategy implementation
 		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
 			return "STAY" + input;
 		} else {
