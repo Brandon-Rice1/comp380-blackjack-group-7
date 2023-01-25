@@ -56,8 +56,16 @@ public class Solver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+//		for (String arg: args) {
+//			System.out.println(arg);
+//		}
+		File inputCSV;
+		if (args.length > 0) {
+			inputCSV = new File(args[0]);
+		} else {
+			inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/input.csv");
+		}
 		// gets the current file
-		File inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/input.csv");
 		if (!inputCSV.isFile()) {
 			System.out.println("File passed is not a file");
 			return;
@@ -66,7 +74,6 @@ public class Solver {
 		try {
 			readIn = new BufferedReader(new FileReader(inputCSV));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
@@ -75,17 +82,20 @@ public class Solver {
 		try {
 			readIn.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
 		// output the results to a new file
 		try {
-			FileWriter writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output.csv"));
+			FileWriter writer;
+			if (args.length > 1) {
+				writer = new FileWriter(new File(args[1]));
+			} else {
+				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output.csv"));
+			}
 			writer.write(output);
 			writer.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
