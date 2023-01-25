@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 /**
  * 
- * A representation of a hand of cards in blackjack.
+ * A representation of cards of our hand in blackjack.
  * 
  * @author Brandon
  *
@@ -75,7 +75,7 @@ public class Hand {
 
 	/**
 	 * gets the value of all cards in the hand and sums them together. Treats aces as having a value of 11.
-	 * @return the sum of the soft values of all cards in this hand
+	 * @return the sum of the hard values of all cards in this hand
 	 */
 	public int getHardTotal() {
 		int total = 0;
