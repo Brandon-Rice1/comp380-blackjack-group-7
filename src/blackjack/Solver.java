@@ -1,6 +1,3 @@
-/**
- * 
- */
 package blackjack;
 
 import java.io.BufferedReader;
@@ -27,6 +24,10 @@ public class Solver {
 	 * @return a properly formatted for csv line that includes our decision
 	 */
 	private static String strategy(String input) {
+		// ignore the 'comment' lines in the input
+		if (input.contains("==>")) {
+			return input;
+		}
 		// initializes the card objects
 		String[] hexCards = input.split(",");
 //		Card dealer;

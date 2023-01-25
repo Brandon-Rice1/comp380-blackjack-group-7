@@ -24,7 +24,7 @@ public class Card {
 	/**
 	 * A map used to convert from card types to their values.
 	 */
-	private final Map<Cardtype, Integer> type2value = Map.ofEntries(Map.entry(Cardtype.Ace, 1),
+	private static final Map<Cardtype, Integer> type2value = Map.ofEntries(Map.entry(Cardtype.Ace, 1),
 			Map.entry(Cardtype.Two, 2), Map.entry(Cardtype.Three, 3), Map.entry(Cardtype.Four, 4),
 			Map.entry(Cardtype.Five, 5), Map.entry(Cardtype.Six, 6), Map.entry(Cardtype.Seven, 7),
 			Map.entry(Cardtype.Eight, 8), Map.entry(Cardtype.Nine, 9), Map.entry(Cardtype.Ten, 10),
@@ -33,7 +33,7 @@ public class Card {
 	/**
 	 * A map used to convert from hex notation integer value to card type.
 	 */
-	private final Map<Integer, Cardtype> hex2type = Map.ofEntries(Map.entry(1, Cardtype.Ace),
+	private static final Map<Integer, Cardtype> hex2type = Map.ofEntries(Map.entry(1, Cardtype.Ace),
 			Map.entry(2, Cardtype.Two), Map.entry(3, Cardtype.Three), Map.entry(4, Cardtype.Four),
 			Map.entry(5, Cardtype.Five), Map.entry(6, Cardtype.Six), Map.entry(7, Cardtype.Seven),
 			Map.entry(8, Cardtype.Eight), Map.entry(9, Cardtype.Nine), Map.entry(10, Cardtype.Ten),
