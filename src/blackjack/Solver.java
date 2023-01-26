@@ -56,9 +56,9 @@ public class Solver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		for (String arg: args) {
-//			System.out.println(arg);
-//		}
+		for (String arg: args) {
+			System.out.println(arg);
+		}
 		File inputCSV;
 		if (args.length > 0) {
 			inputCSV = new File(args[0]);
@@ -77,8 +77,10 @@ public class Solver {
 			e.printStackTrace();
 			return;
 		}
+		System.out.println("Running solver on all lines...");
 		// Read all of the lines in the input and execute the strategy on them.
 		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
+		System.out.println("All lines solved");
 		try {
 			readIn.close();
 		} catch (IOException e) {
@@ -93,7 +95,9 @@ public class Solver {
 			} else {
 				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output.csv"));
 			}
+			System.out.println("Writing to output...");
 			writer.write(output);
+			System.out.println("Done writing.");
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -4,7 +4,7 @@
 
 ### Option 1
 1. Change line 66 in "Solver.java" to be the path to the test file.
-2. Change line 94 in "Solver.java" to be the path/name of the output file.
+2. Change line 96 in "Solver.java" to be the path/name of the output file.
 3. Run "Solver.java"
 
 ### Option 2
