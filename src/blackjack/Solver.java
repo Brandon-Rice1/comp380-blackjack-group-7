@@ -40,7 +40,7 @@ public class Solver {
 		for (int i = 8; i < hexCards.length; i++) {
 			cards.add(new Card(hexCards[i]));
 		}
-		Hand hand = new Hand(cards);
+		Hand hand = new Hand(hexCards);
 		// current strategy implementation
 		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
 			return "STAY" + input;
@@ -63,7 +63,7 @@ public class Solver {
 		if (args.length > 0) {
 			inputCSV = new File(args[0]);
 		} else {
-			inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/input.csv");
+			inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/blackjack_table_samples-V3.csv");
 		}
 		// gets the current file
 		if (!inputCSV.isFile()) {
@@ -93,7 +93,7 @@ public class Solver {
 			if (args.length > 1) {
 				writer = new FileWriter(new File(args[1]));
 			} else {
-				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output.csv"));
+				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/hw1Output.csv"));
 			}
 			System.out.println("Writing to output...");
 			writer.write(output);
