@@ -17,7 +17,7 @@ public class Hand {
 	private ArrayList<Card> hand = new ArrayList<>();
 
 	private boolean hasAce = false;
-	
+
 	private int hardTotal = 0;
 
 	/**
@@ -104,6 +104,15 @@ public class Hand {
 //		}
 //		return total;
 		return this.hardTotal;
+	}
+
+	/**
+	 * gets whether or not this hand contains an Ace
+	 * 
+	 * @return true if this hand contains an Ace, false otherwise
+	 */
+	public boolean hasAce() {
+		return this.hasAce;
 	}
 
 }

@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
@@ -16,6 +17,23 @@ import java.util.stream.Collectors;
  *
  */
 public class Solver {
+
+	/**
+	 * An array representing the table of options for a hand without a pair or an
+	 * ace.
+	 */
+	private static final String[][] hard = new String[17][10];
+
+	/**
+	 * An array representing the table of options for a hand with an ace
+	 */
+	private static final String[][] soft = new String[8][10];
+
+	/**
+	 * An array representing the table of options for a hand with two cards that are
+	 * the same face (ie 2 Kings)
+	 */
+	private static final String[][] pairs = new String[10][10];
 
 	/**
 	 * The naive strategy for determining if we should hit or stay
@@ -30,23 +48,46 @@ public class Solver {
 		}
 		// initializes the card objects
 		String[] hexCards = input.split(",");
-//		Card dealer;
-//		if (temp[1].length() > 0) {
-//			dealer = new Card(temp[1]);
-//		} else {
-//			dealer = null;
-//		}
+		Card dealer;
+		if (hexCards[1].length() > 0) {
+			dealer = new Card(hexCards[1]);
+		} else {
+			dealer = null;
+		}
 		ArrayList<Card> cards = new ArrayList<>();
 		for (int i = 8; i < hexCards.length; i++) {
 			cards.add(new Card(hexCards[i]));
 		}
 		Hand hand = new Hand(hexCards);
 		// current strategy implementation
-		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
-			return "STAY" + input;
-		} else {
-			return "HIT" + input;
+		// pair of same card = pairs table, which only has single options
+		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
+			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2];
 		}
+		String lookup;
+		if (hand.hasAce()) {
+			// contains ace = soft table
+			lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
+		} else {
+			// no ace, no pair = hard table
+			lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
+		}
+		if (lookup.contains("/")) {
+			// if there are multiple options and there are 2 cards, take the first option
+			if (hand.getHand().size() == 2) {
+				return lookup.split("/")[0];
+			} else { // otherwise, take the second
+				return lookup.split("/")[1];
+			}
+		} else { // if there is only one option, take it
+			return lookup;
+		}
+//		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
+//			return "STAY" + input;
+//		} else {
+//			return "HIT" + input;
+//		}
+
 	}
 
 	/**
@@ -56,9 +97,10 @@ public class Solver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		for (String arg: args) {
+		for (String arg : args) {
 			System.out.println(arg);
 		}
+		loadTables();
 		File inputCSV;
 		if (args.length > 0) {
 			inputCSV = new File(args[0]);
@@ -101,6 +143,51 @@ public class Solver {
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static void loadTables() {
+		// pairs csv
+		BufferedReader pairsReader;
+		try {
+			pairsReader = new BufferedReader(
+					new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/pairs.csv")));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+			return;
+		}
+		var pairsStr = pairsReader.lines().toList();
+		for (int i = 1; i < pairsStr.size(); i++) {
+			pairs[i] = Arrays.copyOfRange(pairsStr.get(i).split(","), 1, 11);
+		}
+		// soft csv
+		BufferedReader softReader;
+		try {
+			softReader = new BufferedReader(
+					new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/soft.csv")));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+			return;
+		}
+		var softStr = softReader.lines().toList();
+		for (int i = 1; i < pairsStr.size(); i++) {
+			soft[i] = Arrays.copyOfRange(softStr.get(i).split(","), 1, 11);
+		}
+		// hard csv
+		BufferedReader hardReader;
+		try {
+			hardReader = new BufferedReader(
+					new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/hard.csv")));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+			return;
+		}
+		var hardStr = hardReader.lines().toList();
+		for (int i = 1; i < pairsStr.size(); i++) {
+			hard[i] = Arrays.copyOfRange(hardStr.get(i).split(","), 1, 11);
 		}
 	}
 
