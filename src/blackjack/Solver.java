@@ -59,7 +59,7 @@ public class Solver {
 			cards.add(new Card(hexCards[i]));
 		}
 		Hand hand = new Hand(hexCards);
-		// current strategy implementation
+		// homework 2 strategy
 		// pair of same card = pairs table, which only has single options
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
 			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2];
@@ -82,6 +82,7 @@ public class Solver {
 		} else { // if there is only one option, take it
 			return lookup;
 		}
+//		// homework 1 strategy below
 //		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
 //			return "STAY" + input;
 //		} else {
@@ -146,6 +147,9 @@ public class Solver {
 		}
 	}
 
+	/**
+	 * Loads in the pairs, hard, and soft csv tables for the current strategy
+	 */
 	private static void loadTables() {
 		// pairs csv
 		BufferedReader pairsReader;

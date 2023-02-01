@@ -13,11 +13,18 @@ public class Hand {
 
 	/**
 	 * a list of cards that represents the cards in our hand
+	 * should never be modified once it is set
 	 */
 	private ArrayList<Card> hand = new ArrayList<>();
 
+	/**
+	 * true if this hand contains an Ace, false if it does not
+	 */
 	private boolean hasAce = false;
 
+	/**
+	 * The sum of the hard values of all the cards in this hand
+	 */
 	private int hardTotal = 0;
 
 	/**
@@ -27,6 +34,12 @@ public class Hand {
 	 */
 	public Hand(ArrayList<Card> input) {
 		hand = input;
+		for (Card card : hand) {
+			if (card.getType() == Cardtype.Ace) {
+				this.hasAce = true;
+			}
+			this.hardTotal += card.getHardValue();
+		}
 	}
 
 	/**
