@@ -27,7 +27,7 @@ public class Solver {
 	/**
 	 * An array representing the table of options for a hand with an ace
 	 */
-	private static final String[][] soft = new String[8][10];
+	private static final String[][] soft = new String[9][10];
 
 	/**
 	 * An array representing the table of options for a hand with two cards that are
@@ -60,7 +60,13 @@ public class Solver {
 		}
 		Hand hand = new Hand(hexCards);
 		// homework 2 strategy
+//		if (hand.getHardTotal() > 21) {
+//			System.out.println("ERROR: hand's hard total was greater than 21, which is not covered under the tables");
+//			System.exit(-2);
+//		}
 		// pair of same card = pairs table, which only has single options
+		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
+		// hasAce)
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
 			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2];
 		}
@@ -72,6 +78,8 @@ public class Solver {
 			// no ace, no pair = hard table
 			lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
 		}
+		// alternate idea: reverse lookup, split on '/', reverse each half of the
+		// string; only 1 condition (if 2 cards and 2nd is non-empty)
 		if (lookup.contains("/")) {
 			// if there are multiple options and there are 2 cards, take the first option
 			if (hand.getHand().size() == 2) {
@@ -80,7 +88,7 @@ public class Solver {
 				return lookup.split("/")[1];
 			}
 		} else { // if there is only one option, take it
-			return lookup;
+			return lookup + input;
 		}
 //		// homework 1 strategy below
 //		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
@@ -106,7 +114,7 @@ public class Solver {
 		if (args.length > 0) {
 			inputCSV = new File(args[0]);
 		} else {
-			inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/blackjack_table_samples-V3.csv");
+			inputCSV = new File(System.getProperty("user.dir") + "/src/testFiles/input.csv");
 		}
 		// gets the current file
 		if (!inputCSV.isFile()) {
@@ -136,7 +144,7 @@ public class Solver {
 			if (args.length > 1) {
 				writer = new FileWriter(new File(args[1]));
 			} else {
-				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/hw1Output.csv"));
+				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output2.csv"));
 			}
 			System.out.println("Writing to output...");
 			writer.write(output);
@@ -161,9 +169,9 @@ public class Solver {
 			System.exit(-1);
 			return;
 		}
-		var pairsStr = pairsReader.lines().toList();
+		var pairsStr = pairsReader.lines().toList(); // convert relevant data to arrays
 		for (int i = 1; i < pairsStr.size(); i++) {
-			pairs[i] = Arrays.copyOfRange(pairsStr.get(i).split(","), 1, 11);
+			pairs[i-1] = Arrays.copyOfRange(pairsStr.get(i).split(","), 1, 11);
 		}
 		// soft csv
 		BufferedReader softReader;
@@ -176,8 +184,8 @@ public class Solver {
 			return;
 		}
 		var softStr = softReader.lines().toList();
-		for (int i = 1; i < pairsStr.size(); i++) {
-			soft[i] = Arrays.copyOfRange(softStr.get(i).split(","), 1, 11);
+		for (int i = 1; i < softStr.size(); i++) {
+			soft[i-1] = Arrays.copyOfRange(softStr.get(i).split(","), 1, 11);
 		}
 		// hard csv
 		BufferedReader hardReader;
@@ -190,8 +198,8 @@ public class Solver {
 			return;
 		}
 		var hardStr = hardReader.lines().toList();
-		for (int i = 1; i < pairsStr.size(); i++) {
-			hard[i] = Arrays.copyOfRange(hardStr.get(i).split(","), 1, 11);
+		for (int i = 1; i < hardStr.size(); i++) {
+			hard[i-1] = Arrays.copyOfRange(hardStr.get(i).split(","), 1, 11);
 		}
 	}
 

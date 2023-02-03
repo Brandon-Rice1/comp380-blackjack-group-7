@@ -78,5 +78,10 @@ public class Card {
 			return 11;
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return this.getType().toString();
+	}
 
 }
