@@ -70,19 +70,24 @@ public class Solver {
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
 			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2];
 		}
-		String lookup;
+		String lookup = "";
 		if (hand.hasAce()) {
 			// contains ace = soft table
-			if (hand.getSoftTotal() >= 21) {
+			if (hand.getSoftTotal() == 21) {
 				lookup = "STAY";
-			} else {
+			} else if (hand.getSoftTotal() < 21) {
 				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
 			}
-		} else {
+		}
+		// if no ace OR ace as 11 was too big, use the hard table (ace is 1)
+		if (lookup.equals("")) {
 			// no ace, no pair = hard table
-			if (hand.getHardTotal() >= 21) {
+			if (hand.getHardTotal() == 21) {
 				lookup = "STAY";
-			} else {
+			} else if (hand.getHardTotal() > 21) {
+				throw new IllegalArgumentException();
+			}
+			else {
 				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
 			}
 		}
@@ -91,13 +96,12 @@ public class Solver {
 		if (lookup.contains("/")) {
 			// if there are multiple options and there are 2 cards, take the first option
 			if (hand.getHand().size() == 2) {
-				return lookup.split("/")[0];
+				lookup =  lookup.split("/")[0];
 			} else { // otherwise, take the second
-				return lookup.split("/")[1];
+				lookup = lookup.split("/")[1];
 			}
-		} else { // if there is only one option, take it
-			return lookup + input;
 		}
+		return lookup + input;
 //		// homework 1 strategy below
 //		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
 //			return "STAY" + input;
