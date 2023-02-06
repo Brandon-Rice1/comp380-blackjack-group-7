@@ -73,10 +73,18 @@ public class Solver {
 		String lookup;
 		if (hand.hasAce()) {
 			// contains ace = soft table
-			lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
+			if (hand.getSoftTotal() >= 21) {
+				lookup = "STAY";
+			} else {
+				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
+			}
 		} else {
 			// no ace, no pair = hard table
-			lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
+			if (hand.getHardTotal() >= 21) {
+				lookup = "STAY";
+			} else {
+				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
+			}
 		}
 		// alternate idea: reverse lookup, split on '/', reverse each half of the
 		// string; only 1 condition (if 2 cards and 2nd is non-empty)

@@ -127,5 +127,10 @@ public class Hand {
 	public boolean hasAce() {
 		return this.hasAce;
 	}
+	
+	@Override
+	public String toString() {
+		return this.hand.toString();
+	}
 
 }

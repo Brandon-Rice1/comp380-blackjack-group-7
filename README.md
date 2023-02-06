@@ -1,5 +1,8 @@
 # comp380-blackjack-group-7
 
+### Note for pairs/soft/hard.csv
+These files are ordered from smallest hand/card total to largest hand/card total (ie 2+2, ..., 10+10, A+A), which is the opposite order presented in the CSV files in the google drive.
+
 ## To Run:
 
 ### Option 1
