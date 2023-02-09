@@ -68,7 +68,7 @@ public class Solver {
 		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
 		// hasAce)
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
-			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2];
+			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2] + input;
 		}
 		String lookup = "";
 		if (hand.hasAce()) {
