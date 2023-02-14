@@ -1,6 +1,7 @@
 package blackjack;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
@@ -15,7 +16,7 @@ public class Hand {
 	 * a list of cards that represents the cards in our hand
 	 * should never be modified once it is set
 	 */
-	private ArrayList<Card> hand = new ArrayList<>();
+	private List<Card> hand = new ArrayList<>();
 
 	/**
 	 * true if this hand contains an Ace, false if it does not
@@ -32,7 +33,7 @@ public class Hand {
 	 * 
 	 * @param input an arraylist of card objects
 	 */
-	public Hand(ArrayList<Card> input) {
+	public Hand(List<Card> input) {
 		hand = input;
 		for (Card card : hand) {
 			if (card.getType() == Cardtype.Ace) {
@@ -63,7 +64,7 @@ public class Hand {
 	 * 
 	 * @return an arraylist of cards in this hand
 	 */
-	public ArrayList<Card> getHand() {
+	public List<Card> getHand() {
 		return hand;
 	}
 

@@ -50,6 +50,11 @@ public class Card {
 		type = hex2type.get(HexFormat.fromHexDigits(cardData, 4, 5));
 		value = type2value.get(type);
 	}
+	
+	public Card(Cardtype type) {
+		this.type = type;
+		this.value = type2value.get(type);
+	}
 
 	/**
 	 * 
