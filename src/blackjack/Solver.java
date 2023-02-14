@@ -55,6 +55,8 @@ public class Solver {
 	 * NOTE: will be 10x larger than expected since this is an integer
 	 */
 	private static AtomicInteger total2 = new AtomicInteger();
+	
+	private static AtomicInteger numTrials = new AtomicInteger();
 
 	/**
 	 * The naive strategy for determining if we should hit or stay
@@ -137,6 +139,7 @@ public class Solver {
 		if (input.contains("==>")) {
 			return 0;
 		}
+		numTrials.addAndGet(1);
 		String[] hexCards = input.split(",");
 		// make the dealer's hand
 		Card dealerCard = new Card(hexCards[1]);
@@ -327,7 +330,7 @@ public class Solver {
 		// Read all of the lines in the input and execute the strategy on them.
 //		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
 		readIn.lines().parallel().map(elem -> compareStrategies(elem));
-		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/100000000+","+(total2.get() / 10)/100000000+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
+		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
 		System.out.println("All lines solved");
 		try {
 			readIn.close();
