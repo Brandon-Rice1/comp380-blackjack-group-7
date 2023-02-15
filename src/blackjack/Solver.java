@@ -133,7 +133,12 @@ public class Solver {
 //		}
 
 	}
-	
+
+	/**
+	 *
+	 * @param input an input line of the csv file
+	 * @return
+	 */
 	private static int compareStrategies(String input) {
 		// ignore the 'comment' lines in the input
 		if (input.contains("==>")) {
@@ -167,7 +172,15 @@ public class Solver {
 		total2.addAndGet(strategy2(dealer, hand, deck2, Move.HIT));
 		return 0;
 	}
-	
+
+	/**
+	 * implementing strategy 1 (the naive strategy in homework1)
+	 * @param dealer the dealer's card
+	 * @param hand cards in the hand
+	 * @param deck
+	 * @param move the move taken by the player
+	 * @return
+	 */
 	private static int strategy1(Hand dealer, Hand hand, Deck deck, Move move) {
 		// condition to return if hand is final
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
@@ -190,7 +203,15 @@ public class Solver {
 			return strategy1(dealer, hand, deck, Move.HIT);
 		}
 	}
-	
+
+	/**
+	 * implementing strategy 2 (the strategy used for homework 2)
+	 * @param dealer the dealer's card
+	 * @param hand the card in the hand
+	 * @param deck the
+	 * @param move the move taken by the player
+	 * @return the
+	 */
 	private static int strategy2(Hand dealer, Hand hand, Deck deck, Move move) {
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
@@ -241,7 +262,15 @@ public class Solver {
 		}
 		return strategy2(dealer, hand, deck, nextMove);
 	}
-	
+
+	/**
+	 * evaluate the outcomes of a game situation after implementing the strategy
+	 * @param dealer the dealer's card
+	 * @param hand cards in the hand
+	 * @param deck
+	 * @param move the move taken by the player
+	 * @return
+	 */
 	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
 		// dealer makes the move(s)
 		while((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
@@ -390,8 +419,7 @@ public class Solver {
 		// hard csv
 		BufferedReader hardReader;
 		try {
-			hardReader = new BufferedReader(
-					new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/hard.csv")));
+			hardReader = new BufferedReader(new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/hard.csv")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			System.exit(-1);
