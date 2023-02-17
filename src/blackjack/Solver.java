@@ -91,6 +91,9 @@ public class Solver {
 		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
 		// hasAce)
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
+			if (hand.hasAce()) {
+				return pairs[9][dealer.getSoftValue() - 2] + input;
+			}
 			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2] + input;
 		}
 		String lookup = "";
@@ -328,9 +331,9 @@ public class Solver {
 		}
 		System.out.println("Running solver on all lines...");
 		// Read all of the lines in the input and execute the strategy on them.
-//		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
-		readIn.lines().parallel().map(elem -> compareStrategies(elem));
-		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
+		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
+//		readIn.lines().parallel().map(elem -> compareStrategies(elem));
+//		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
 		System.out.println("All lines solved");
 		try {
 			readIn.close();
