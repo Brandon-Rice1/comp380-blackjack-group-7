@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
 
 /**
  * The main class. Contains the current strategy as well as the file i/o.
@@ -231,6 +232,9 @@ public class Solver {
 		// logic to decide next move and recursion
 		String lookup = "";
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
+			if (hand.hasAce()) {
+				lookup = pairs[9][dealer.getSoftTotal() - 2];
+			}
 			lookup = pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftTotal() - 2];
 		} else if (hand.hasAce()) {
 			// contains ace = soft table
@@ -260,8 +264,13 @@ public class Solver {
 			}
 		}
 		Move nextMove = Move.valueOf(lookup);
-		if (nextMove == Move.DOUBLE || nextMove == Move.HIT) {
+		if (nextMove == Move.DOUBLE || nextMove == Move.HIT) { // if hit or double, draw a card
 			hand.addCard(deck.draw());
+		} else if (nextMove == Move.SPLIT) { // if split, recurse on each new hand
+			Cardtype type = hand.getHand().get(0).getType();
+			Hand hand1 = new Hand(List.of(new Card(type), deck.draw()));
+			Hand hand2 = new Hand(List.of(new Card(type), deck.draw()));
+			return strategy2(dealer, hand1, deck, nextMove) + strategy2(dealer, hand2, deck, nextMove);
 		}
 		return strategy2(dealer, hand, deck, nextMove);
 	}
@@ -360,9 +369,10 @@ public class Solver {
 		}
 		System.out.println("Running solver on all lines...");
 		// Read all of the lines in the input and execute the strategy on them.
-		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
-//		readIn.lines().parallel().map(elem -> compareStrategies(elem));
-//		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
+//		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
+//		double total = readIn.lines().parallel().map(elem -> compareStrategies(elem)).collect(Collectors.summingDouble((elem)->elem));
+		readIn.lines().parallel().forEachOrdered(elem -> compareStrategies(elem));
+		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
 		System.out.println("All lines solved");
 		try {
 			readIn.close();
