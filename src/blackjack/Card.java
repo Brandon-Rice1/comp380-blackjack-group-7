@@ -88,5 +88,20 @@ public class Card {
 	public String toString() {
 		return this.getType().toString();
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) { // if the same object, are equal
+			return true;
+		}
+//		if (o == null) {
+//			return false;
+//		}
+		if (!(o instanceof Card)) { // if not a Card object, then not equal
+			return false;
+		}
+		Card card2 = (Card) o;
+		return (this.getType() == card2.getType()) && (this.getHardValue() == card2.getHardValue());
+	}
 
 }

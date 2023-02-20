@@ -39,5 +39,20 @@ public class Deck {
 			return null;
 		}
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) { // if the same object, are equal
+			return true;
+		}
+//		if (o == null) {
+//			return false;
+//		}
+		if (!(o instanceof Deck)) { // if not a Deck object, then not equal
+			return false;
+		}
+		Deck deck2 = (Deck) o;
+		return this.deck == deck2.deck;
+	}
 
 }

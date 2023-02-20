@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
+//import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collector;
+//import java.util.stream.Collector;
 
 /**
  * The main class. Contains the current strategy as well as the file i/o.
@@ -59,84 +59,84 @@ public class Solver {
 	
 	private static AtomicInteger numTrials = new AtomicInteger();
 
-	/**
-	 * The naive strategy for determining if we should hit or stay
-	 * 
-	 * @param input the raw csv input line
-	 * @return a properly formatted for csv line that includes our decision
-	 */
-	private static String strategy(String input) {
-		// ignore the 'comment' lines in the input
-		if (input.contains("==>")) {
-			return input;
-		}
-		// initializes the card objects
-		String[] hexCards = input.split(",");
-		Card dealer;
-		if (hexCards[1].length() > 0) {
-			dealer = new Card(hexCards[1]);
-		} else {
-			dealer = null;
-		}
-		ArrayList<Card> cards = new ArrayList<>();
-		for (int i = 8; i < hexCards.length; i++) {
-			cards.add(new Card(hexCards[i]));
-		}
-		Hand hand = new Hand(hexCards);
-		// homework 2 strategy
-//		if (hand.getHardTotal() > 21) {
-//			System.out.println("ERROR: hand's hard total was greater than 21, which is not covered under the tables");
-//			System.exit(-2);
+//	/**
+//	 * The naive strategy for determining if we should hit or stay
+//	 * 
+//	 * @param input the raw csv input line
+//	 * @return a properly formatted for csv line that includes our decision
+//	 */
+//	private static String strategy(String input) {
+//		// ignore the 'comment' lines in the input
+//		if (input.contains("==>")) {
+//			return input;
 //		}
-		// pair of same card = pairs table, which only has single options
-		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
-		// hasAce)
-		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
-			if (hand.hasAce()) {
-				return pairs[9][dealer.getSoftValue() - 2] + input;
-			}
-			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2] + input;
-		}
-		String lookup = "";
-		if (hand.hasAce()) {
-			// contains ace = soft table
-			if (hand.getSoftTotal() == 21) {
-				lookup = "STAY";
-			} else if (hand.getSoftTotal() < 21) {
-				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
-			}
-		}
-		// if no ace OR ace as 11 was too big, use the hard table (ace is 1)
-		if (lookup.equals("")) {
-			// no ace, no pair = hard table
-			if (hand.getHardTotal() == 21) {
-				lookup = "STAY";
-			} else if (hand.getHardTotal() > 21) {
-				throw new IllegalArgumentException();
-			}
-			else {
-				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
-			}
-		}
-		// alternate idea: reverse lookup, split on '/', reverse each half of the
-		// string; only 1 condition (if 2 cards and 2nd is non-empty)
-		if (lookup.contains("/")) {
-			// if there are multiple options and there are 2 cards, take the first option
-			if (hand.getHand().size() == 2) {
-				lookup =  lookup.split("/")[0];
-			} else { // otherwise, take the second
-				lookup = lookup.split("/")[1];
-			}
-		}
-		return lookup + input;
-//		// homework 1 strategy below
-//		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
-//			return "STAY" + input;
+//		// initializes the card objects
+//		String[] hexCards = input.split(",");
+//		Card dealer;
+//		if (hexCards[1].length() > 0) {
+//			dealer = new Card(hexCards[1]);
 //		} else {
-//			return "HIT" + input;
+//			dealer = null;
 //		}
-
-	}
+//		ArrayList<Card> cards = new ArrayList<>();
+//		for (int i = 8; i < hexCards.length; i++) {
+//			cards.add(new Card(hexCards[i]));
+//		}
+//		Hand hand = new Hand(hexCards);
+//		// homework 2 strategy
+////		if (hand.getHardTotal() > 21) {
+////			System.out.println("ERROR: hand's hard total was greater than 21, which is not covered under the tables");
+////			System.exit(-2);
+////		}
+//		// pair of same card = pairs table, which only has single options
+//		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
+//		// hasAce)
+//		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
+//			if (hand.hasAce()) {
+//				return pairs[9][dealer.getSoftValue() - 2] + input;
+//			}
+//			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2] + input;
+//		}
+//		String lookup = "";
+//		if (hand.hasAce()) {
+//			// contains ace = soft table
+//			if (hand.getSoftTotal() == 21) {
+//				lookup = "STAY";
+//			} else if (hand.getSoftTotal() < 21) {
+//				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
+//			}
+//		}
+//		// if no ace OR ace as 11 was too big, use the hard table (ace is 1)
+//		if (lookup.equals("")) {
+//			// no ace, no pair = hard table
+//			if (hand.getHardTotal() == 21) {
+//				lookup = "STAY";
+//			} else if (hand.getHardTotal() > 21) {
+//				throw new IllegalArgumentException();
+//			}
+//			else {
+//				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
+//			}
+//		}
+//		// alternate idea: reverse lookup, split on '/', reverse each half of the
+//		// string; only 1 condition (if 2 cards and 2nd is non-empty)
+//		if (lookup.contains("/")) {
+//			// if there are multiple options and there are 2 cards, take the first option
+//			if (hand.getHand().size() == 2) {
+//				lookup =  lookup.split("/")[0];
+//			} else { // otherwise, take the second
+//				lookup = lookup.split("/")[1];
+//			}
+//		}
+//		return lookup + input;
+////		// homework 1 strategy below
+////		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
+////			return "STAY" + input;
+////		} else {
+////			return "HIT" + input;
+////		}
+//
+//	}
 
 	/**
 	 *
@@ -170,7 +170,7 @@ public class Solver {
 		Random rnd1 = new Random(seed);
 		Random rnd2 = new Random(seed);
 		deck1.shuffle(rnd1);
-		deck2.shuffle(rnd2);
+		deck2.shuffle(rnd2); // NOTE: probably need to test that these are equal
 		// test the strategies
 		total1.addAndGet(strategy1(dealer, hand, deck1, Move.HIT));
 		total2.addAndGet(strategy2(dealer, hand, deck2, Move.HIT));
