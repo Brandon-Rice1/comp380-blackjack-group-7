@@ -225,11 +225,11 @@ public class Solver {
 			// logic to determine value of hand to return
 			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
-			if (temp > maxGain1.get()) {
-				maxGain1.addAndGet(temp);
+			if (temp > maxGain2.get()) {
+				maxGain2.addAndGet(temp);
 			}
-			if (temp < maxLoss1.get()) {
-				maxLoss1.addAndGet(temp);
+			if (temp < maxLoss2.get()) {
+				maxLoss2.addAndGet(temp);
 			}
 			return temp;
 		}
