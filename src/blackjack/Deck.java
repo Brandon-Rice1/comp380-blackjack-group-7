@@ -55,4 +55,8 @@ public class Deck {
 		return this.deck == deck2.deck;
 	}
 
+	public void putBack(Card card) {
+		deck.add(0, card);
+	}
+
 }

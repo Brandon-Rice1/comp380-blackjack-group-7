@@ -6,13 +6,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 //import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
 //import java.util.stream.Collector;
+import blackjack.Move;
 
 /**
  * The main class. Contains the current strategy as well as the file i/o.
@@ -143,37 +147,38 @@ public class Solver {
 	 * @param input an input line of the csv file
 	 * @return
 	 */
-	private static int compareStrategies(String input) {
-		// ignore the 'comment' lines in the input
-		if (input.contains("==>")) {
-			return 0;
-		}
+	private static int compareStrategies() {
 		numTrials.addAndGet(1);
-		String[] hexCards = input.split(",");
-		// make the dealer's hand
-		Card dealerCard = new Card(hexCards[1]);
-		Hand dealer = new Hand(List.of(dealerCard));
-		// make your hand
-		Hand hand = new Hand(hexCards);
-		// get all of the cards to be removed from the deck
-		ArrayList<Card> cards = new ArrayList<>();
-		for (String card : hexCards) {
-			if (card != "") {
-				cards.add(new Card(card));
-			}
-		}
-		
 		// make two shuffled decks that are identical
-		Deck deck1 = new Deck(cards);
-		Deck deck2 = new Deck(cards);
-		long seed = new Random().nextLong();
+		Deck deck1 = new Deck();
+		Deck deck2 = new Deck();
+		Random rndSeed = new Random();
+		final long seed = rndSeed.nextLong();
 		Random rnd1 = new Random(seed);
 		Random rnd2 = new Random(seed);
 		deck1.shuffle(rnd1);
 		deck2.shuffle(rnd2); // NOTE: probably need to test that these are equal
+		// make the dealer's hand
+		Card dealerCard = deck1.draw();
+		Hand dealer1 = new Hand(List.of(dealerCard));
+		Hand dealer2 = new Hand(List.of(dealerCard));
+		deck2.draw();
+		// make your hand
+		Card yourCard1 = deck1.draw();
+		Card yourCard2 = deck1.draw();
+		Hand hand1 = new Hand(List.of(yourCard1, yourCard2));
+		Hand hand2 = new Hand(List.of(yourCard1, yourCard2));
+		deck2.draw();
+		deck2.draw();
+		// remove cards for between 0 and 3 other players
+		final int players = rndSeed.nextInt(4);
+		for (int i = 0; i < players * 2; i++) {
+			deck1.draw();
+			deck2.draw();
+		}
 		// test the strategies
-		total1.addAndGet(strategy1(dealer, hand, deck1, Move.HIT));
-		total2.addAndGet(strategy2(dealer, hand, deck2, Move.HIT));
+		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
 		return 0;
 	}
 
@@ -243,8 +248,9 @@ public class Solver {
 			} else if (hand.getSoftTotal() < 21) {
 				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftTotal() - 2];
 			}
-		} else {
-			// no ace, no pair = hard table
+		}
+		if (lookup == "") {
+			// no ace, no pair = hard table; or with ace > 21
 			if (hand.getHardTotal() == 21) {
 				lookup = "STAY";
 			} else if (hand.getHardTotal() > 21) {
@@ -258,7 +264,7 @@ public class Solver {
 		if (lookup.contains("/")) {
 			// if there are multiple options and there are 2 cards, take the first option
 			if (hand.getHand().size() == 2) {
-				lookup =  lookup.split("/")[0];
+				lookup = lookup.split("/")[0];
 			} else { // otherwise, take the second
 				lookup = lookup.split("/")[1];
 			}
@@ -270,7 +276,26 @@ public class Solver {
 			Cardtype type = hand.getHand().get(0).getType();
 			Hand hand1 = new Hand(List.of(new Card(type), deck.draw()));
 			Hand hand2 = new Hand(List.of(new Card(type), deck.draw()));
-			return strategy2(dealer, hand1, deck, nextMove) + strategy2(dealer, hand2, deck, nextMove);
+			// copy the dealer's hand to avoid indexing issues
+			Hand dealer2 = new Hand(dealer.getHand());
+			// play out the first hand
+			strategy2(dealer, hand1, deck, nextMove);
+			// put back dealer cards (dealer should not go yet)
+			for (int i = dealer.getHand().size()-1; i > 0; i--) {
+				deck.putBack(dealer.getHand().get(i));
+			}
+			// run strategy for other hand
+			int outcome2 = strategy2(dealer2, hand2, deck, nextMove);
+			// evaluate the first hand based on the actual, final dealer's hand
+			Double outcome1 = (evaluateOutcome(dealer2, hand, deck, move) * 10);
+			int total = outcome1.intValue() + outcome2;
+			if (total > maxGain1.get()) {
+				maxGain1.addAndGet(total);
+			}
+			if (total < maxLoss1.get()) {
+				maxLoss1.addAndGet(total);
+			}
+			return total;
 		}
 		return strategy2(dealer, hand, deck, nextMove);
 	}
@@ -371,8 +396,22 @@ public class Solver {
 		// Read all of the lines in the input and execute the strategy on them.
 //		String output = readIn.lines().parallel().map(elem -> strategy(elem)).collect(Collectors.joining("\r\n"));
 //		double total = readIn.lines().parallel().map(elem -> compareStrategies(elem)).collect(Collectors.summingDouble((elem)->elem));
-		readIn.lines().parallel().forEachOrdered(elem -> compareStrategies(elem));
-		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+(total1.get() / 10)/numTrials.get()+","+(total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+maxGain1.get()/10+","+maxGain2.get()/10+"\r\nMax Loss,"+maxLoss1.get()/10+","+maxLoss2.get()/10+"\r\n";
+//		readIn.lines().parallel().forEachOrdered(elem -> compareStrategies(elem));
+		// should run the comparison 100,000,000 times
+		ExecutorService tasks = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		System.out.println("Making tasks (this will take awhile)...");
+		for (int i = 0; i < 100000000; i++) {
+//			System.out.println("Running iteration: " + i);
+			tasks.execute(() -> compareStrategies());
+		}
+		tasks.shutdown();
+		try {
+			System.out.println("Waiting on tasks to complete...");
+			tasks.awaitTermination(5, TimeUnit.MINUTES);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+((double)total1.get() / 10)/numTrials.get()+","+((double)total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+(double)maxGain1.get()/10+","+(double)maxGain2.get()/10+"\r\nMax Loss,"+(double)maxLoss1.get()/10+","+(double)maxLoss2.get()/10+"\r\n";
 		System.out.println("All lines solved");
 		try {
 			readIn.close();

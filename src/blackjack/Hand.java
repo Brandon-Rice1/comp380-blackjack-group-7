@@ -34,7 +34,7 @@ public class Hand {
 	 * @param input an arraylist of card objects
 	 */
 	public Hand(List<Card> input) {
-		hand = input;
+		hand.addAll(input);
 		for (Card card : hand) {
 			if (card.getType() == Cardtype.Ace) {
 				this.hasAce = true;
