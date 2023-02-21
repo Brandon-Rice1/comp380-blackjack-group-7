@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 //import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
 //import java.util.stream.Collector;
-import blackjack.Move;
 
 /**
  * The main class. Contains the current strategy as well as the file i/o.
@@ -145,7 +144,7 @@ public class Solver {
 	/**
 	 *
 	 * @param input an input line of the csv file
-	 * @return
+	 * @return 0
 	 */
 	private static int compareStrategies() {
 		numTrials.addAndGet(1);
@@ -186,9 +185,9 @@ public class Solver {
 	 * implementing strategy 1 (the naive strategy in homework1)
 	 * @param dealer the dealer's card
 	 * @param hand cards in the hand
-	 * @param deck
+	 * @param deck the list of cards
 	 * @param move the move taken by the player
-	 * @return
+	 * @return the strategy1 results of the case
 	 */
 	private static int strategy1(Hand dealer, Hand hand, Deck deck, Move move) {
 		// condition to return if hand is final
@@ -217,9 +216,9 @@ public class Solver {
 	 * implementing strategy 2 (the strategy used for homework 2)
 	 * @param dealer the dealer's card
 	 * @param hand the card in the hand
-	 * @param deck the
+	 * @param deck the list of cards
 	 * @param move the move taken by the player
-	 * @return the
+	 * @return the strategy2 results of the case
 	 */
 	private static int strategy2(Hand dealer, Hand hand, Deck deck, Move move) {
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
@@ -304,9 +303,9 @@ public class Solver {
 	 * evaluate the outcomes of a game situation after implementing the strategy
 	 * @param dealer the dealer's card
 	 * @param hand cards in the hand
-	 * @param deck
+	 * @param deck a list of cards
 	 * @param move the move taken by the player
-	 * @return
+	 * @return the outcome of the current hand
 	 */
 	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
 		// dealer makes the move(s)
@@ -367,7 +366,7 @@ public class Solver {
 	 * Reads from a csv file, uses the strategy on each game, and writes a new
 	 * output file containing the results.
 	 * 
-	 * @param args
+	 * @param args string arguments
 	 */
 	public static void main(String[] args) {
 		for (String arg : args) {
