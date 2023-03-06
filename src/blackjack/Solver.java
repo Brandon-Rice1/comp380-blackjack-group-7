@@ -6,14 +6,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-//import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-//import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
 //import java.util.stream.Collector;
 
@@ -41,26 +41,30 @@ public class Solver {
 	 * the same face (ie 2 Kings)
 	 */
 	private static final String[][] pairs = new String[10][10];
-	
-	private static AtomicInteger maxGain1 = new AtomicInteger();
-	
-	private static AtomicInteger maxLoss1 = new AtomicInteger();
-	
-	/**
-	 * NOTE: will be 10x larger than expected since this is an integer
-	 */
-	private static AtomicInteger total1 = new AtomicInteger();
-	
-	private static AtomicInteger maxGain2 = new AtomicInteger();
-	
-	private static AtomicInteger maxLoss2 = new AtomicInteger();
-	
-	/**
-	 * NOTE: will be 10x larger than expected since this is an integer
-	 */
-	private static AtomicInteger total2 = new AtomicInteger();
-	
-	private static AtomicInteger numTrials = new AtomicInteger();
+
+//	private static AtomicInteger maxGain1 = new AtomicInteger();
+//	
+//	private static AtomicInteger maxLoss1 = new AtomicInteger();
+//	
+//	/**
+//	 * NOTE: will be 10x larger than expected since this is an integer
+//	 */
+//	private static AtomicInteger total1 = new AtomicInteger();
+//	
+//	private static AtomicInteger maxGain2 = new AtomicInteger();
+//	
+//	private static AtomicInteger maxLoss2 = new AtomicInteger();
+//	
+//	/**
+//	 * NOTE: will be 10x larger than expected since this is an integer
+//	 */
+//	private static AtomicInteger total2 = new AtomicInteger();
+//	
+//	private static AtomicInteger numTrials = new AtomicInteger();
+
+	private static ArrayList<AtomicInteger> strat1Totals = new ArrayList<>();
+
+	private static ArrayList<AtomicInteger> strat2Totals = new ArrayList<>();
 
 //	/**
 //	 * The naive strategy for determining if we should hit or stay
@@ -141,52 +145,93 @@ public class Solver {
 //
 //	}
 
-	/**
-	 *
-	 * @param input an input line of the csv file
-	 * @return 0
-	 */
-	private static int compareStrategies() {
-		numTrials.addAndGet(1);
+//	/**
+//	 *
+//	 * @param input an input line of the csv file
+//	 * @return 0
+//	 */
+//	private static int compareStrategies() {
+//		numTrials.addAndGet(1);
+//		// make two shuffled decks that are identical
+//		Deck deck1 = new Deck();
+//		Deck deck2 = new Deck();
+//		Random rndSeed = new Random();
+//		final long seed = rndSeed.nextLong();
+//		Random rnd1 = new Random(seed);
+//		Random rnd2 = new Random(seed);
+//		deck1.shuffle(rnd1);
+//		deck2.shuffle(rnd2); // NOTE: probably need to test that these are equal
+//		assert deck1 == deck2;
+//		// make the dealer's hand
+//		Card dealerCard = deck1.draw();
+//		Hand dealer1 = new Hand(List.of(dealerCard));
+//		Hand dealer2 = new Hand(List.of(dealerCard));
+//		deck2.draw();
+//		// make your hand
+//		Card yourCard1 = deck1.draw();
+//		Card yourCard2 = deck1.draw();
+//		Hand hand1 = new Hand(List.of(yourCard1, yourCard2));
+//		Hand hand2 = new Hand(List.of(yourCard1, yourCard2));
+//		deck2.draw();
+//		deck2.draw();
+//		// remove cards for between 0 and 3 other players
+//		final int players = rndSeed.nextInt(4);
+//		for (int i = 0; i < players * 2; i++) {
+//			deck1.draw();
+//			deck2.draw();
+//		}
+//		// test the strategies
+//		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+//		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
+//		return 0;
+//	}
+
+	private static int compareStrategiesHW4(String input, int index) {
+//		numTrials.addAndGet(1);
+		String[] hexCards = input.split(",");
+		// get the dealer's card and hand
+		Card dealerCard = new Card(hexCards[2]);
+		Hand dealer1 = new Hand(List.of(dealerCard));
+		Hand dealer2 = new Hand(List.of(dealerCard));
+		// get our hand
+		Card yourCard1 = new Card(hexCards[11]);
+		Card yourCard2 = new Card(hexCards[12]);
+		Hand hand1 = new Hand(List.of(yourCard1, yourCard2));
+		Hand hand2 = new Hand(List.of(yourCard1, yourCard2));
 		// make two shuffled decks that are identical
-		Deck deck1 = new Deck();
-		Deck deck2 = new Deck();
+		// first, get all the cards that are not in the decks
+		ArrayList<Card> cards = new ArrayList<>();
+		for (String strCard : hexCards) {
+			if (strCard != "") {
+				cards.add(new Card(strCard));
+			}
+		}
+		// make the decks and remove the cards that shouldn't be in them
+		Deck deck1 = new Deck(cards);
+		Deck deck2 = new Deck(cards);
+		// shuffle the decks in the same way
 		Random rndSeed = new Random();
 		final long seed = rndSeed.nextLong();
 		Random rnd1 = new Random(seed);
 		Random rnd2 = new Random(seed);
 		deck1.shuffle(rnd1);
-		deck2.shuffle(rnd2); // NOTE: probably need to test that these are equal
-		// make the dealer's hand
-		Card dealerCard = deck1.draw();
-		Hand dealer1 = new Hand(List.of(dealerCard));
-		Hand dealer2 = new Hand(List.of(dealerCard));
-		deck2.draw();
-		// make your hand
-		Card yourCard1 = deck1.draw();
-		Card yourCard2 = deck1.draw();
-		Hand hand1 = new Hand(List.of(yourCard1, yourCard2));
-		Hand hand2 = new Hand(List.of(yourCard1, yourCard2));
-		deck2.draw();
-		deck2.draw();
-		// remove cards for between 0 and 3 other players
-		final int players = rndSeed.nextInt(4);
-		for (int i = 0; i < players * 2; i++) {
-			deck1.draw();
-			deck2.draw();
-		}
+		deck2.shuffle(rnd2);
+		assert deck1 == deck2;
 		// test the strategies
-		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
-		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
+		strat1Totals.get(index).addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+		strat2Totals.get(index).addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
+//		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+//		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
 		return 0;
 	}
 
 	/**
 	 * implementing strategy 1 (the naive strategy in homework1)
+	 * 
 	 * @param dealer the dealer's card
-	 * @param hand cards in the hand
-	 * @param deck the list of cards
-	 * @param move the move taken by the player
+	 * @param hand   cards in the hand
+	 * @param deck   the list of cards
+	 * @param move   the move taken by the player
 	 * @return the strategy1 results of the case
 	 */
 	private static int strategy1(Hand dealer, Hand hand, Deck deck, Move move) {
@@ -195,12 +240,6 @@ public class Solver {
 			// logic to determine value of hand to return
 			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
-			if (temp > maxGain1.get()) {
-				maxGain1.addAndGet(temp);
-			}
-			if (temp < maxLoss1.get()) {
-				maxLoss1.addAndGet(temp);
-			}
 			return temp;
 		}
 		// logic to decide next move and recurse
@@ -214,10 +253,11 @@ public class Solver {
 
 	/**
 	 * implementing strategy 2 (the strategy used for homework 2)
+	 * 
 	 * @param dealer the dealer's card
-	 * @param hand the card in the hand
-	 * @param deck the list of cards
-	 * @param move the move taken by the player
+	 * @param hand   the card in the hand
+	 * @param deck   the list of cards
+	 * @param move   the move taken by the player
 	 * @return the strategy2 results of the case
 	 */
 	private static int strategy2(Hand dealer, Hand hand, Deck deck, Move move) {
@@ -225,12 +265,8 @@ public class Solver {
 			// logic to determine value of hand to return
 			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
-			if (temp > maxGain1.get()) {
-				maxGain1.addAndGet(temp);
-			}
-			if (temp < maxLoss1.get()) {
-				maxLoss1.addAndGet(temp);
-			}
+//			maxGain2.set(Math.max(temp, maxGain2.get()));
+//			maxLoss2.set(Math.min(temp, maxLoss2.get()));
 			return temp;
 		}
 		// logic to decide next move and recursion
@@ -254,8 +290,7 @@ public class Solver {
 				lookup = "STAY";
 			} else if (hand.getHardTotal() > 21) {
 				throw new IllegalArgumentException();
-			}
-			else {
+			} else {
 				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftTotal() - 2];
 			}
 		}
@@ -269,6 +304,7 @@ public class Solver {
 			}
 		}
 		Move nextMove = Move.valueOf(lookup);
+		move = nextMove;
 		if (nextMove == Move.DOUBLE || nextMove == Move.HIT) { // if hit or double, draw a card
 			hand.addCard(deck.draw());
 		} else if (nextMove == Move.SPLIT) { // if split, recurse on each new hand
@@ -278,22 +314,19 @@ public class Solver {
 			// copy the dealer's hand to avoid indexing issues
 			Hand dealer2 = new Hand(dealer.getHand());
 			// play out the first hand
-			strategy2(dealer, hand1, deck, nextMove);
+			Move nextMove1 = nextMove;
+			strategy2(dealer, hand1, deck, nextMove1);
 			// put back dealer cards (dealer should not go yet)
-			for (int i = dealer.getHand().size()-1; i > 0; i--) {
+			for (int i = dealer.getHand().size() - 1; i > 0; i--) {
 				deck.putBack(dealer.getHand().get(i));
 			}
 			// run strategy for other hand
 			int outcome2 = strategy2(dealer2, hand2, deck, nextMove);
 			// evaluate the first hand based on the actual, final dealer's hand
-			Double outcome1 = (evaluateOutcome(dealer2, hand, deck, move) * 10);
+			Double outcome1 = (evaluateOutcome(dealer2, hand1, deck, nextMove1) * 10);
 			int total = outcome1.intValue() + outcome2;
-			if (total > maxGain1.get()) {
-				maxGain1.addAndGet(total);
-			}
-			if (total < maxLoss1.get()) {
-				maxLoss1.addAndGet(total);
-			}
+//			maxGain2.set(Math.max(total, maxGain2.get()));
+//			maxLoss2.set(Math.min(total, maxLoss2.get()));
 			return total;
 		}
 		return strategy2(dealer, hand, deck, nextMove);
@@ -301,15 +334,16 @@ public class Solver {
 
 	/**
 	 * evaluate the outcomes of a game situation after implementing the strategy
+	 * 
 	 * @param dealer the dealer's card
-	 * @param hand cards in the hand
-	 * @param deck a list of cards
-	 * @param move the move taken by the player
+	 * @param hand   cards in the hand
+	 * @param deck   a list of cards
+	 * @param move   the move taken by the player
 	 * @return the outcome of the current hand
 	 */
 	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
 		// dealer makes the move(s)
-		while((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
 			dealer.addCard(deck.draw());
 		}
 		// you have blackjack
@@ -325,33 +359,33 @@ public class Solver {
 					return 1.5;
 				}
 			}
-		// if the dealer has blackjack and you don't
-		} else if(dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
+			// if the dealer has blackjack and you don't
+		} else if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
 			return -1.0;
-		// if you busted
-		} else if(hand.getHardTotal() > 21) {
+			// if you busted
+		} else if (hand.getHardTotal() > 21) {
 			if (move == Move.DOUBLE) {
 				return -2.0;
 			} else {
 				return -1.0;
 			}
-		// if you surrendered
+			// if you surrendered
 		} else if (move == Move.SURRENDER) {
 			return -0.5;
-		// Comparing non-blackjack hands
-		// hands are the same
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) == 
-				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+			// Comparing non-blackjack hands
+			// hands are the same
+		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+				: dealer.getSoftTotal()) == (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
 			return 0.0;
-		// dealer wins
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) > 
-				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+			// dealer wins
+		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
 			if (move == Move.DOUBLE) {
 				return -2.0;
 			} else {
 				return -1.0;
 			}
-		// you win
+			// you win
 		} else {
 			if (move == Move.DOUBLE) {
 				return 2.0;
@@ -361,7 +395,6 @@ public class Solver {
 		}
 	}
 
-	
 	/**
 	 * Reads from a csv file, uses the strategy on each game, and writes a new
 	 * output file containing the results.
@@ -397,20 +430,40 @@ public class Solver {
 //		double total = readIn.lines().parallel().map(elem -> compareStrategies(elem)).collect(Collectors.summingDouble((elem)->elem));
 //		readIn.lines().parallel().forEachOrdered(elem -> compareStrategies(elem));
 		// should run the comparison 100,000,000 times
-		ExecutorService tasks = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//		ExecutorService tasks = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		System.out.println("Making tasks (this will take awhile)...");
-		for (int i = 0; i < 100000000; i++) {
-//			System.out.println("Running iteration: " + i);
-			tasks.execute(() -> compareStrategies());
-		}
-		tasks.shutdown();
-		try {
-			System.out.println("Waiting on tasks to complete...");
-			tasks.awaitTermination(5, TimeUnit.MINUTES);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+((double)total1.get() / 10)/numTrials.get()+","+((double)total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+(double)maxGain1.get()/10+","+(double)maxGain2.get()/10+"\r\nMax Loss,"+(double)maxLoss1.get()/10+","+(double)maxLoss2.get()/10+"\r\n";
+//		for (int i = 0; i < 100000000; i++) {
+////			System.out.println("Running iteration: " + i);
+//			tasks.execute(() -> compareStrategies());
+//		}
+		AtomicInteger testCount = new AtomicInteger(0);
+		String output = readIn.lines().parallel().filter((elem) -> elem.startsWith(",,")).map((elem) -> {
+			final int index = testCount.getAndIncrement();
+			for (int i = 0; i < 2000000; i++) {
+//				tasks.execute(() -> compareStrategiesHW4(elem, index));
+				compareStrategiesHW4(elem, index);
+			}
+			return (strat1Totals.get(index).get() / 20000000) + "," + (strat2Totals.get(index).get() / 20000000)
+					+ elem.substring(2, elem.length());
+		}).collect(Collectors.joining("\r\n"));
+		// ALTERNATIVE IDEA: not sure if it works/is faster, but could have the stream
+		// stick everything in the pool and then do the whole pool.
+//		readIn.lines().parallel().filter((elem) -> elem.startsWith(",,")).forEachOrdered((elem) -> {
+//			final int index = testCount.getAndIncrement();		
+//			for (int i = 0; i < 2000000; i++) {
+//				tasks.execute(() -> compareStrategiesHW4(elem, index));
+//			}
+//			});
+//		tasks.shutdown();
+//		try {
+//			System.out.println("Waiting on tasks to complete...");
+//			if (!tasks.awaitTermination(5, TimeUnit.MINUTES)) {
+//				System.out.println("Timed out waiting for things to finish");
+//			}
+//		} catch (InterruptedException e1) {
+//			e1.printStackTrace();
+//		}
+//		String output = ",Strategy 1,Strategy2\r\nSingle Round Outcome,"+((double)total1.get() / 10)/numTrials.get()+","+((double)total2.get() / 10)/numTrials.get()+"\r\nMax Gain,"+(double)maxGain1.get()/10+","+(double)maxGain2.get()/10+"\r\nMax Loss,"+(double)maxLoss1.get()/10+","+(double)maxLoss2.get()/10+"\r\n";
 		System.out.println("All lines solved");
 		try {
 			readIn.close();
@@ -451,7 +504,7 @@ public class Solver {
 		}
 		var pairsStr = pairsReader.lines().toList(); // convert relevant data to arrays
 		for (int i = 1; i < pairsStr.size(); i++) {
-			pairs[i-1] = Arrays.copyOfRange(pairsStr.get(i).split(","), 1, 11);
+			pairs[i - 1] = Arrays.copyOfRange(pairsStr.get(i).split(","), 1, 11);
 		}
 		// soft csv
 		BufferedReader softReader;
@@ -465,12 +518,13 @@ public class Solver {
 		}
 		var softStr = softReader.lines().toList();
 		for (int i = 1; i < softStr.size(); i++) {
-			soft[i-1] = Arrays.copyOfRange(softStr.get(i).split(","), 1, 11);
+			soft[i - 1] = Arrays.copyOfRange(softStr.get(i).split(","), 1, 11);
 		}
 		// hard csv
 		BufferedReader hardReader;
 		try {
-			hardReader = new BufferedReader(new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/hard.csv")));
+			hardReader = new BufferedReader(
+					new FileReader(new File(System.getProperty("user.dir") + "/src/blackjack/tables/hard.csv")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -478,7 +532,7 @@ public class Solver {
 		}
 		var hardStr = hardReader.lines().toList();
 		for (int i = 1; i < hardStr.size(); i++) {
-			hard[i-1] = Arrays.copyOfRange(hardStr.get(i).split(","), 1, 11);
+			hard[i - 1] = Arrays.copyOfRange(hardStr.get(i).split(","), 1, 11);
 		}
 	}
 
