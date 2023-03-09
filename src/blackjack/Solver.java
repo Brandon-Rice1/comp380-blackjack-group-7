@@ -238,7 +238,7 @@ public class Solver {
 		// condition to return if hand is final
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
-			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
+			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
 			return temp;
 		}
@@ -263,7 +263,7 @@ public class Solver {
 	private static int strategy2(Hand dealer, Hand hand, Deck deck, Move move) {
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
-			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
+			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
 //			maxGain2.set(Math.max(temp, maxGain2.get()));
 //			maxLoss2.set(Math.min(temp, maxLoss2.get()));
@@ -323,7 +323,7 @@ public class Solver {
 			// run strategy for other hand
 			int outcome2 = strategy2(dealer2, hand2, deck, nextMove);
 			// evaluate the first hand based on the actual, final dealer's hand
-			Double outcome1 = (evaluateOutcome(dealer2, hand1, deck, nextMove1) * 10);
+			Double outcome1 = (evaluateOutcomeRevised(dealer2, hand1, deck, nextMove1) * 10);
 			int total = outcome1.intValue() + outcome2;
 //			maxGain2.set(Math.max(total, maxGain2.get()));
 //			maxLoss2.set(Math.min(total, maxLoss2.get()));
@@ -332,8 +332,71 @@ public class Solver {
 		return strategy2(dealer, hand, deck, nextMove);
 	}
 
+//	/**
+//	 * evaluate the outcomes of a game situation after implementing the strategy
+//	 * 
+//	 * @param dealer the dealer's card
+//	 * @param hand   cards in the hand
+//	 * @param deck   a list of cards
+//	 * @param move   the move taken by the player
+//	 * @return the outcome of the current hand
+//	 */
+//	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
+//		// dealer makes the move(s)
+//		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+//			dealer.addCard(deck.draw());
+//		}
+//		// you have blackjack
+//		if (hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
+//			// dealer has blackjack
+//			if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
+//				return 0.0;
+//			} else { // dealer doesn't have blackjack
+//				// you doubled or didn't
+//				if (move == Move.DOUBLE) {
+//					return 3.0;
+//				} else {
+//					return 1.5;
+//				}
+//			}
+//			// if the dealer has blackjack and you don't
+//		} else if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
+//			return -1.0;
+//			// if you busted
+//		} else if (hand.getHardTotal() > 21) {
+//			if (move == Move.DOUBLE) {
+//				return -2.0;
+//			} else {
+//				return -1.0;
+//			}
+//			// if you surrendered
+//		} else if (move == Move.SURRENDER) {
+//			return -0.5;
+//			// Comparing non-blackjack hands
+//			// hands are the same
+//		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+//				: dealer.getSoftTotal()) == (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+//			return 0.0;
+//			// dealer wins
+//		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+//				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+//			if (move == Move.DOUBLE) {
+//				return -2.0;
+//			} else {
+//				return -1.0;
+//			}
+//			// you win
+//		} else {
+//			if (move == Move.DOUBLE) {
+//				return 2.0;
+//			} else {
+//				return 1.0;
+//			}
+//		}
+//	}
+	
 	/**
-	 * evaluate the outcomes of a game situation after implementing the strategy
+	 * evaluate the outcomes of a game situation after implementing the strategy. Revised for homework 4
 	 * 
 	 * @param dealer the dealer's card
 	 * @param hand   cards in the hand
@@ -341,58 +404,34 @@ public class Solver {
 	 * @param move   the move taken by the player
 	 * @return the outcome of the current hand
 	 */
-	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
-		// dealer makes the move(s)
+	private static Double evaluateOutcomeRevised(Hand dealer, Hand hand, Deck deck, Move move) {
 		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
 			dealer.addCard(deck.draw());
 		}
-		// you have blackjack
-		if (hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
-			// dealer has blackjack
-			if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
-				return 0.0;
-			} else { // dealer doesn't have blackjack
-				// you doubled or didn't
-				if (move == Move.DOUBLE) {
-					return 3.0;
-				} else {
-					return 1.5;
-				}
-			}
-			// if the dealer has blackjack and you don't
-		} else if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
-			return -1.0;
-			// if you busted
-		} else if (hand.getHardTotal() > 21) {
-			if (move == Move.DOUBLE) {
-				return -2.0;
-			} else {
-				return -1.0;
-			}
-			// if you surrendered
-		} else if (move == Move.SURRENDER) {
+		if (move == Move.SURRENDER) {
 			return -0.5;
-			// Comparing non-blackjack hands
-			// hands are the same
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
-				: dealer.getSoftTotal()) == (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
-			return 0.0;
-			// dealer wins
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
-				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
-			if (move == Move.DOUBLE) {
-				return -2.0;
-			} else {
-				return -1.0;
-			}
-			// you win
-		} else {
-			if (move == Move.DOUBLE) {
-				return 2.0;
-			} else {
-				return 1.0;
-			}
 		}
+		double output = 0.0;
+		if((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
+			output = -1;
+		} else if((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+			output = -1;
+		} else if (dealer.getSoftTotal() == hand.getSoftTotal()) {
+			output = 0;
+		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
+			output = 1.5;
+		} else if(dealer.getHardTotal() > 21) {
+			output = 1;
+		} else if((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+				: dealer.getSoftTotal()) < (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())){
+			output = 1;
+		} else {
+			System.out.println("Something went wrong when evaluating outcomes:");
+			System.out.println("\tHand: " + hand.toString());
+			System.out.println("\tDealer: " + dealer.toString());
+		}
+		return (move == Move.DOUBLE ? output * 2 : output);
 	}
 
 	/**
