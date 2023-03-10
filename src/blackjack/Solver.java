@@ -63,8 +63,10 @@ public class Solver {
 //	private static AtomicInteger numTrials = new AtomicInteger();
 
 	private static ArrayList<AtomicInteger> strat1Totals = new ArrayList<>();
+//	private static ArrayList<Double> strat1Totals = new ArrayList<>();
 
 	private static ArrayList<AtomicInteger> strat2Totals = new ArrayList<>();
+//	private static ArrayList<Double> strat2Totals = new ArrayList<>();
 
 //	/**
 //	 * The naive strategy for determining if we should hit or stay
@@ -219,7 +221,9 @@ public class Solver {
 		assert deck1 == deck2;
 		// test the strategies
 		strat1Totals.get(index).addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+//		strat1Totals.set(index, strat1Totals.get(index)+strategy1(dealer1, hand1, deck1, Move.HIT));
 		strat2Totals.get(index).addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
+//		strat2Totals.set(index, strat1Totals.get(index)+strategy2(dealer2, hand2, deck2, Move.HIT));
 //		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
 //		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
 		return 0;
@@ -264,6 +268,7 @@ public class Solver {
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
 			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move) * 10;
+//			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move);
 			int temp = outcome.intValue();
 //			maxGain2.set(Math.max(temp, maxGain2.get()));
 //			maxLoss2.set(Math.min(temp, maxLoss2.get()));
@@ -417,7 +422,8 @@ public class Solver {
 		} else if((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
 				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
 			output = -1;
-		} else if (dealer.getSoftTotal() == hand.getSoftTotal()) {
+		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
+				: dealer.getSoftTotal()) == (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
 			output = 0;
 		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
 			output = 1.5;
@@ -476,14 +482,23 @@ public class Solver {
 //			tasks.execute(() -> compareStrategies());
 //		}
 		AtomicInteger testCount = new AtomicInteger(0);
-		String output = readIn.lines().parallel().filter((elem) -> elem.startsWith(",,")).map((elem) -> {
-			final int index = testCount.getAndIncrement();
-			for (int i = 0; i < 2000000; i++) {
-//				tasks.execute(() -> compareStrategiesHW4(elem, index));
-				compareStrategiesHW4(elem, index);
+		String output = readIn.lines().parallel().map((elem) -> {
+			if (elem.startsWith(",,")) {
+				final int index = testCount.getAndIncrement();
+				strat1Totals.add(new AtomicInteger());
+//				strat1Totals.add(0.0);
+				strat2Totals.add(new AtomicInteger());
+//				strat2Totals.add(0.0);
+				for (int i = 0; i < 2000000; i++) {
+//					tasks.execute(() -> compareStrategiesHW4(elem, index));
+					compareStrategiesHW4(elem, index);
+				}
+				System.out.println("Iteration " + index + " complete");
+				return ((double)strat1Totals.get(index).get() / 20000000.0) + "," + ((double)strat2Totals.get(index).get() / 20000000.0)
+						+ "," + elem.substring(2, elem.length());
+			} else {
+				return elem;
 			}
-			return (strat1Totals.get(index).get() / 20000000) + "," + (strat2Totals.get(index).get() / 20000000)
-					+ elem.substring(2, elem.length());
 		}).collect(Collectors.joining("\r\n"));
 		// ALTERNATIVE IDEA: not sure if it works/is faster, but could have the stream
 		// stick everything in the pool and then do the whole pool.
@@ -516,7 +531,7 @@ public class Solver {
 			if (args.length > 1) {
 				writer = new FileWriter(new File(args[1]));
 			} else {
-				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output2.csv"));
+				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output4.csv"));
 			}
 			System.out.println("Writing to output...");
 			writer.write(output);
