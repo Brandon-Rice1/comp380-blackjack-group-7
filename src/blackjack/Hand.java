@@ -133,5 +133,31 @@ public class Hand {
 	public String toString() {
 		return this.hand.toString();
 	}
+	
+	@Override
+	public int hashCode() {
+		this.hand.sort((a, b) -> {
+			return a.getSoftValue() - b.getSoftValue();
+		});
+		return this.hand.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) { // if the same object, are equal
+			return true;
+		}
+		if (!(o instanceof Hand)) { // if not a Card object, then not equal
+			return false;
+		}
+		Hand hand2 = (Hand) o;
+		this.hand.sort((a, b) -> {
+			return a.getSoftValue() - b.getSoftValue();
+		});
+		hand2.getHand().sort((a, b) -> {
+			return a.getSoftValue() - b.getSoftValue();
+		});
+		return this.hand.equals(hand2.getHand());
+	}
 
 }
