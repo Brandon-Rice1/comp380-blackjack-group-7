@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 //import java.util.concurrent.ExecutorService;
@@ -69,6 +71,12 @@ public class Solver {
 		// make the decks and remove the cards that shouldn't be in them
 		Deck deck1 = new Deck(cards);
 		Deck deck2 = new Deck(cards);
+		// make "hands" of the other player cards
+		cards.remove(dealerCard);
+		cards.remove(yourCard1);
+		cards.remove(yourCard2);
+		Hand others1 = new Hand(cards);
+		Hand others2 = new Hand(cards);
 		// shuffle the decks in the same way
 		Random rndSeed = new Random();
 		final long seed = rndSeed.nextLong();
@@ -195,6 +203,140 @@ public class Solver {
 		return strategy2(dealer, hand, deck, nextMove);
 	}
 	
+	private static HashMap<GameState, Double> accOutcomes = new HashMap<>();
+	
+	private static HashMap<GameState, Move> moveOutcomes = new HashMap<GameState, Move>();
+	
+	private static int strategy3(Hand dealer, Hand hand, Hand others, GameState position, Deck deck, Move move) {
+		int score = 0;
+		for (Move option : Move.values()) {
+			// skip double and surrender if they are not available options
+			if ((option == Move.DOUBLE || option == Move.SURRENDER) && hand.getHand().size() != 2) {
+				continue;
+			}
+			double temp = getDescendentScore(dealer, hand, others, position, deck, option);
+		}
+	}
+	
+	
+	private static double getDescendentScore(Hand dealer, Hand hand, Hand others, GameState position, Deck deck, Move move) {
+		// For a particular game state (hand, dealer's card, and deck/other player's cards), if we have found a solution, return that solution
+		// otherwise, for each possible move, find the score for that move, and store the best outcome in the mapping, and return that solution
+			// for surrendering, the outcome is always -0.5 (but this is only possible if there are 2 cards in the player's hand)
+			// for staying, the dealer proceeds to draw cards according to the 17 rule, and the total returned from the result of that is the outcome
+			// for the other options, we need to run the simulation for each possible card draw and the probablity for the current deck
+				// for doubling, the hand gets 1 new card (try for all options in deck), then the dealer draws cards until 17 rule, eval the outcome
+				// for hitting, like doubling, except a recursive call to this method for each new possible card
+				// for splitting, like hitting, except there is a recursive call to this function for every possible combination of 2 hands
+					// note that each hand can be evaluated independently* and the results added
+					// *except for the part where both hands need to play before the dealer goes...
+		if (accOutcomes.containsKey(position)) {
+			return accOutcomes.get(position); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
+		}
+		// if we have busted, there is no point in continuing since we lose
+		if ((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
+			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
+			accOutcomes.put(position, outcome);
+			return outcome;
+		}
+		double scoreOutcome = 0.0;
+		Move moveOutcome = null;
+		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
+		if (hand.getHand().size() == 2) {
+			scoreOutcome = -0.5;
+			moveOutcome = Move.SURRENDER;
+			
+			// TODO: implement splitting behavior (not easy b/c have to play both possibilities before dealerPossibilities)
+				// basically, want to play first hand until it doesn't hit. When that happens, play the second hand until it doesn't hit. Then dealer.
+			
+			// check doubling outcomes
+			double doubleOutcome = 0.0;
+			var tempSet = cardCounts.entrySet();
+			for (var entry : tempSet) {
+				// update hand and deck appropriately
+				Card card = new Card(entry.getKey());
+				Hand tempHand = new Hand(hand.getHand());
+				tempHand.addCard(card);
+				ArrayList<Card> allRmCards = new ArrayList<>();
+				allRmCards.addAll(dealer.getHand());
+				allRmCards.addAll(hand.getHand());
+				allRmCards.addAll(others.getHand());
+				allRmCards.add(card);
+				Deck tempDeck = new Deck(allRmCards);
+				doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(dealer, tempHand, others, position.updateHand(card), tempDeck, Move.DOUBLE));
+			}
+			if (doubleOutcome >= scoreOutcome) {
+				scoreOutcome = doubleOutcome;
+				moveOutcome = Move.DOUBLE;
+			}
+		}
+		double stayOutcome = dealerPossibilities(dealer, hand, others, position, deck, Move.STAY);
+		if (stayOutcome >= scoreOutcome) {
+			scoreOutcome = stayOutcome;
+			moveOutcome = Move.STAY;
+		}
+		
+		// TODO: implement hitting behavior (recursive calls to this function)
+		
+//		Move moveOutcome = null;
+//		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
+//		cardCounts.entrySet().forEach((entry) -> {
+//			if (entry.getValue() != 0) {
+//				if (move == Move.HIT) {
+//					int temp = getDescendentScore(dealer, handTotal + entry.getKey(), position.updateHand(new Card(entry.getKey())), deck, move);
+//				}
+//			}
+//		});
+	}
+	
+	private static double dealerPossibilities(Hand dealer, Hand hand, Hand others, GameState position, Deck deck, Move move) {
+		// we have been here before; just return right away
+		if (accOutcomes.containsKey(position)) {
+			return accOutcomes.get(position).doubleValue(); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
+		}
+		double output = 0.0;
+		// dealer no longer wants to take cards; evaluate the outcomes
+		if ((dealer.hasAce() && dealer.getSoftTotal() > 17) || dealer.getHardTotal() >= 17) { // dealer is done; eval outcome time
+			int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+			int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
+			if(handTotal > 21) { // we busted
+				output = -1;
+			} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
+				output = -1;
+			} else if (dealerTotal == handTotal) { // tie
+				output = 0;
+			} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
+				output = 1.5;
+			} else if(dealer.getHardTotal() > 21) { // dealer busted
+				output = 1;
+			} else if(dealerTotal < handTotal){ // we won
+				output = 1;
+			} else { // an outcome that should not be possible
+				System.out.println("Something went wrong when evaluating outcomes:");
+				System.out.println("\tHand: " + hand.toString());
+				System.out.println("\tDealer: " + dealer.toString());
+			}
+			return (move == Move.DOUBLE ? output * 2 : output);
+		}
+		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
+		// try every possible card draw for the dealer
+		var tempSet = cardCounts.entrySet();
+		for (var entry : tempSet) {
+			Card card = new Card(entry.getKey());
+			Hand tempDealer = new Hand(dealer.getHand());
+			tempDealer.addCard(card);
+			ArrayList<Card> allRmCards = new ArrayList<>();
+			allRmCards.addAll(dealer.getHand());
+			allRmCards.addAll(hand.getHand());
+			allRmCards.addAll(others.getHand());
+			allRmCards.add(card);
+			Deck tempDeck = new Deck(allRmCards);
+//			deck.remove(card);
+			output += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(tempDealer, hand, others, position.updateDealer(card), tempDeck, move));
+		}
+		return output;
+	}
+	
 	/**
 	 * evaluate the outcomes of a game situation after implementing the strategy. Revised for homework 4
 	 * 
@@ -212,22 +354,21 @@ public class Solver {
 			return -0.5;
 		}
 		double output = 0.0;
-		if((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
+		if(handTotal > 21) { // we busted
 			output = -1;
-		} else if((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
-				: dealer.getSoftTotal()) > (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+		} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
 			output = -1;
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
-				: dealer.getSoftTotal()) == (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+		} else if (dealerTotal == handTotal) { // tie
 			output = 0;
-		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
+		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
 			output = 1.5;
-		} else if(dealer.getHardTotal() > 21) {
+		} else if(dealer.getHardTotal() > 21) { // dealer busted
 			output = 1;
-		} else if((dealer.getSoftTotal() > 21 ? dealer.getHardTotal()
-				: dealer.getSoftTotal()) < (hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())){
+		} else if(dealerTotal < handTotal){ // we won
 			output = 1;
-		} else {
+		} else { // an outcome that should not be possible
 			System.out.println("Something went wrong when evaluating outcomes:");
 			System.out.println("\tHand: " + hand.toString());
 			System.out.println("\tDealer: " + dealer.toString());

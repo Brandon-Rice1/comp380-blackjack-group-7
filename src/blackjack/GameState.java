@@ -12,7 +12,7 @@ public class GameState {
 	
 	private ArrayList<Card> combinedCardState = new ArrayList<>();
 
-	public GameState(Hand hand, Hand dealer, Hand others) {
+	public GameState(Hand dealer, Hand hand, Hand others) {
 		hand.getHand().sort((a, b) -> {
 			return a.getSoftValue() - b.getSoftValue();
 		});
@@ -31,6 +31,22 @@ public class GameState {
 		combinedCardState.add(null);
 		combinedCardState.addAll(others.getHand());
 		
+	}
+	
+	public GameState updateHand(Card card) {
+		Hand tempHand = new Hand(this.hand.getHand());
+		tempHand.addCard(card);
+//		this.hand.addCard(card);
+//		this.combinedCardState.add(card);
+		return new GameState(this.dealer, tempHand, this.others);
+	}
+	
+	public GameState updateDealer(Card card) {
+		Hand tempDealer = new Hand(this.dealer.getHand());
+		tempDealer.addCard(card);
+//		this.dealer.addCard(card);
+//		this.combinedCardState.add(card);
+		return new GameState(tempDealer, this.hand, this.others);
 	}
 
 	@Override

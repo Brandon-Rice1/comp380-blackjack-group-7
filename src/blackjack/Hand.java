@@ -1,6 +1,7 @@
 package blackjack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -17,6 +18,8 @@ public class Hand {
 	 * should never be modified once it is set
 	 */
 	private List<Card> hand = new ArrayList<>();
+	
+	private HashMap<Integer, Integer> cardCounts = new HashMap<Integer, Integer>(10);
 
 	/**
 	 * true if this hand contains an Ace, false if it does not
@@ -34,12 +37,16 @@ public class Hand {
 	 * @param input an arraylist of card objects
 	 */
 	public Hand(List<Card> input) {
+		for (int i = 1; i <= 10; i++) {
+			cardCounts.put(i, 0);
+		}
 		hand.addAll(input);
 		for (Card card : hand) {
 			if (card.getType() == Cardtype.Ace) {
 				this.hasAce = true;
 			}
 			this.hardTotal += card.getHardValue();
+			cardCounts.put(card.getHardValue(), cardCounts.get(card.getHardValue()) + 1);
 		}
 	}
 
@@ -57,6 +64,7 @@ public class Hand {
 				this.hasAce = true;
 			}
 			this.hardTotal += temp.getHardValue();
+			cardCounts.put(temp.getHardValue(), cardCounts.get(temp.getHardValue()) + 1);
 		}
 	}
 

@@ -55,6 +55,11 @@ public class Card {
 		this.type = type;
 		this.value = type2value.get(type);
 	}
+	
+	public Card(int cardValue) {
+		this.type = hex2type.get(cardValue);
+		this.value = cardValue;
+	}
 
 	/**
 	 * 
