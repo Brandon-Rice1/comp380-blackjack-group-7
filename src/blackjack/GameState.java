@@ -1,6 +1,7 @@
 package blackjack;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class GameState {
 
@@ -47,6 +48,14 @@ public class GameState {
 //		this.dealer.addCard(card);
 //		this.combinedCardState.add(card);
 		return new GameState(tempDealer, this.hand, this.others);
+	}
+	
+	public GameState updateOthers(List<Card> Cards) {
+		Hand tempOthers = new Hand(this.others.getHand());
+		for (Card card : Cards) {
+			tempOthers.addCard(card);
+		}
+		return new GameState(this.dealer, this.hand, tempOthers);
 	}
 
 	@Override

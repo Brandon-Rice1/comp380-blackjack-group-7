@@ -239,19 +239,25 @@ public class Solver {
 			accOutcomes.put(position, outcome);
 			return outcome;
 		}
-		double scoreOutcome = 0.0;
-		Move moveOutcome = null;
+		double scoreOutcome = -0.5;
+		Move moveOutcome = Move.SURRENDER;
 		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
 		if (hand.getHand().size() == 2) {
-			scoreOutcome = -0.5;
-			moveOutcome = Move.SURRENDER;
 			
 			// TODO: implement splitting behavior (not easy b/c have to play both possibilities before dealerPossibilities)
 				// basically, want to play first hand until it doesn't hit. When that happens, play the second hand until it doesn't hit. Then dealer.
+				// first, create 2 hands and 2 gameStates, where each hand has 1 card, and the other card is in the "others" section of GameState
+				// will have to setup a double-nested for loop of calls so each hand has the given, split cards (can't stay or surrender on 1 card)
+					// or have to add conditions where can only hit if the hand has < 2 cards in it
+				// play hand 1 like this function, except when reach what is a dealerPossibilities call here, instead add the cards in hand1 to hand2's gameState
+				// under "others". Then, eval hand2 just like hand1 was. When hand2 reaches what would be dealerPossibilities, instead add the cards in hand2 to
+				// hand1's gameState under "others". Then, proceed to the regular dealerPossibilities call for each hand and state. dealer's cards and probabilities 
+				// should be the same in both cases, but the chance of winning will vary depending on each hand
 			
 			// check doubling outcomes
 			double doubleOutcome = 0.0;
 			var tempSet = cardCounts.entrySet();
+			// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
 			for (var entry : tempSet) {
 				// update hand and deck appropriately
 				Card card = new Card(entry.getKey());
@@ -270,23 +276,38 @@ public class Solver {
 				moveOutcome = Move.DOUBLE;
 			}
 		}
+		
+		// check staying outcomes
 		double stayOutcome = dealerPossibilities(dealer, hand, others, position, deck, Move.STAY);
 		if (stayOutcome >= scoreOutcome) {
 			scoreOutcome = stayOutcome;
 			moveOutcome = Move.STAY;
 		}
 		
-		// TODO: implement hitting behavior (recursive calls to this function)
-		
-//		Move moveOutcome = null;
-//		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
-//		cardCounts.entrySet().forEach((entry) -> {
-//			if (entry.getValue() != 0) {
-//				if (move == Move.HIT) {
-//					int temp = getDescendentScore(dealer, handTotal + entry.getKey(), position.updateHand(new Card(entry.getKey())), deck, move);
-//				}
-//			}
-//		});
+		// check hitting outcomes
+		double hitOutcome = 0.0;
+		var tempSet = cardCounts.entrySet();
+		// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
+		for (var entry : tempSet) {
+			// update hand and deck appropriately
+			Card card = new Card(entry.getKey());
+			Hand tempHand = new Hand(hand.getHand());
+			tempHand.addCard(card);
+			ArrayList<Card> allRmCards = new ArrayList<>();
+			allRmCards.addAll(dealer.getHand());
+			allRmCards.addAll(hand.getHand());
+			allRmCards.addAll(others.getHand());
+			allRmCards.add(card);
+			Deck tempDeck = new Deck(allRmCards);
+			// recursively call this function
+			hitOutcome += (entry.getValue()/tempDeck.getNumCards() * getDescendentScore(dealer, tempHand, others, position.updateHand(card), tempDeck, Move.HIT));
+		}
+		if (hitOutcome >= scoreOutcome) {
+			scoreOutcome = hitOutcome;
+			moveOutcome = Move.HIT;
+		}
+		accOutcomes.put(position, scoreOutcome);
+		return scoreOutcome;
 	}
 	
 	private static double dealerPossibilities(Hand dealer, Hand hand, Hand others, GameState position, Deck deck, Move move) {
@@ -316,10 +337,12 @@ public class Solver {
 				System.out.println("\tHand: " + hand.toString());
 				System.out.println("\tDealer: " + dealer.toString());
 			}
-			return (move == Move.DOUBLE ? output * 2 : output);
+			output = (move == Move.DOUBLE ? output * 2 : output);
+			accOutcomes.put(position, output);
+			return output;
 		}
-		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
 		// try every possible card draw for the dealer
+		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
 		var tempSet = cardCounts.entrySet();
 		for (var entry : tempSet) {
 			Card card = new Card(entry.getKey());
