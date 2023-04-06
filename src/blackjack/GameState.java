@@ -1,6 +1,7 @@
 package blackjack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GameState {
@@ -11,21 +12,20 @@ public class GameState {
 
 	private Hand others;
 	
-	public Hand getHand() {
-		return hand;
-	}
-
-	public Hand getDealer() {
-		return dealer;
-	}
-
-	public Hand getOthers() {
-		return others;
-	}
+	private int numCards = 0;
+	
+	private HashMap<Integer, Integer> cardsRemaining = new HashMap<Integer, Integer>(10); 
 
 	private ArrayList<Card> combinedCardState = new ArrayList<>();
 
 	public GameState(Hand dealer, Hand hand, Hand others) {
+		for (int j = 1; j <= 10; j++) {
+			if (j == 10) {
+				cardsRemaining.put(j, 16);
+			} else {
+				cardsRemaining.put(j, 4);
+			}
+		}
 		hand.getHand().sort((a, b) -> {
 			return a.getSoftValue() - b.getSoftValue();
 		});
@@ -43,7 +43,12 @@ public class GameState {
 		combinedCardState.addAll(dealer.getHand());
 		combinedCardState.add(null);
 		combinedCardState.addAll(others.getHand());
-		
+		numCards = 52 - (combinedCardState.size() - 2);
+		for (Card card : combinedCardState) {
+			if (card != null) {
+				cardsRemaining.put(card.getHardValue(), cardsRemaining.get(card.getHardValue()) - 1);
+			}
+		}
 	}
 	
 	public GameState updateHand(Card card) {
@@ -69,7 +74,27 @@ public class GameState {
 		}
 		return new GameState(this.dealer, this.hand, tempOthers);
 	}
+	
+	public Hand getHand() {
+		return hand;
+	}
 
+	public Hand getDealer() {
+		return dealer;
+	}
+
+	public Hand getOthers() {
+		return others;
+	}
+	
+	public int getNumCards() {
+		return numCards;
+	}
+
+	public HashMap<Integer, Integer> getCardsRemaining() {
+		return cardsRemaining;
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 		if (o == this) {

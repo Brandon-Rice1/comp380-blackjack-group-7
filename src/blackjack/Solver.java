@@ -253,13 +253,34 @@ public class Solver {
 				// under "others". Then, eval hand2 just like hand1 was. When hand2 reaches what would be dealerPossibilities, instead add the cards in hand2 to
 				// hand1's gameState under "others". Then, proceed to the regular dealerPossibilities call for each hand and state. dealer's cards and probabilities 
 				// should be the same in both cases, but the chance of winning will vary depending on each hand
-			Hand hand2 = new Hand(List.of(hand.getHand().get(0)));
-			Hand dealer2 = new Hand(dealer.getHand());
-			List<Card> origOthers = others.getHand();
-			origOthers.add(hand.getHand().get(0));
-			Hand others2 = new Hand(origOthers);
-			GameState position2 = new GameState(dealer2, hand2, others2);
-			double splitScore = getSplitScore(dealer, hand, hand2, false, others, position, position2, deck, Move.SPLIT);
+			
+			if (hand.getHand().get(0) == hand.getHand().get(1)) {
+				var tempSet = cardCounts.entrySet();
+				for (var entry1 : tempSet) {
+					if (entry1.getValue() == 0) {
+						continue;
+					}
+					for (var entry2 : tempSet) {
+						if (entry2.getValue() == 0 || (entry2.getValue() == 1 && entry2.getKey() == entry1.getKey())) {
+							continue;
+						}
+						// draw new cards for both hands, update the states to reflect the new missing cards
+						Hand hand1 = new Hand(List.of(hand.getHand().get(0), new Card(entry1.getKey())));
+						Hand hand2 = new Hand(List.of(hand.getHand().get(0), new Card(entry2.getKey())));
+						Hand dealer2 = new Hand(dealer.getHand());
+						Hand others1 = new Hand(others.getHand());
+						others1.addCard(hand2.getHand().get(0));
+						others1.addCard(hand2.getHand().get(1));
+						List<Card> origOthers = others.getHand();
+						origOthers.addAll(hand1.getHand());
+						Hand others2 = new Hand(origOthers);
+						GameState position1 = new GameState(dealer, hand1, others1);
+						GameState position2 = new GameState(dealer2, hand2, others2);
+						double splitScore = getSplitScore(dealer, hand, hand2, false, others, position, position2, deck, Move.SPLIT);
+					}
+				}
+				
+			}
 			
 			
 			// check doubling outcomes
@@ -268,6 +289,9 @@ public class Solver {
 			// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
 			for (var entry : tempSet) {
 				// update hand and deck appropriately
+				if (entry.getValue() == 0) {
+					continue;
+				}
 				Card card = new Card(entry.getKey());
 				Hand tempHand = new Hand(hand.getHand());
 				tempHand.addCard(card);
@@ -368,29 +392,22 @@ public class Solver {
 		return output;
 	}
 	
-	private static double getSplitScore(GameState position1, GameState position2, boolean secondHand, Deck deck, Move move) {
+	private static double getSplitScore(GameState position1, GameState position2, boolean secondHand, Move move) {
 		Hand hand;
 		Hand dealer;
 		Hand others;
 		GameState position;
 		if (secondHand) {
+			// assumes that others and position includes info from the other hand
 			hand = position2.getHand();
 			dealer = position2.getDealer();
 			others = position2.getOthers();
-			for (Card card : position1.getHand().getHand()) {
-				others.addCard(card);
-			}
 			position = position2;
-			position.updateOthers(hand1.getHand());
 		} else {
 			hand = position1.getHand();
 			dealer = position1.getDealer();
 			others = position2.getOthers();
-			for (Card card : position2.getHand().getHand()) {
-				others.addCard(card);
-			}
 			position = position1;
-			position.updateOthers(hand2.getHand());
 		}
 		if (accOutcomes.containsKey(position)) {
 			return accOutcomes.get(position); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
@@ -403,8 +420,11 @@ public class Solver {
 //		}
 		double scoreOutcome = -0.5;
 		Move moveOutcome = Move.SURRENDER;
-		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
+		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
 		if (hand.getHand().size() == 2) {
+			
+			// TODO: implement recursive splitting
+			
 			// check doubling outcomes
 			double doubleOutcome = 0.0;
 			var tempSet = cardCounts.entrySet();
@@ -421,9 +441,10 @@ public class Solver {
 				allRmCards.add(card);
 				Deck tempDeck = new Deck(allRmCards);
 				if (secondHand) {
-					Hand tempHand1 = new Hand(hand1.getHand());
+					Hand tempHand1 = new Hand(position1.getHand().getHand());
 					Deck tempDeck1 = new Deck(allRmCards);
 					doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(dealer, tempHand1, others, position1, tempDeck1, move));
+//					doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(position1, move));
 					doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(dealer, tempHand, others, position.updateHand(card), tempDeck, Move.DOUBLE));
 				} else {
 					getSplitScore(dealer, tempHand, hand2, true, others, position.updateHand(card), position2.updateOthers(List.of(card)), tempDeck, Move.DOUBLE);
