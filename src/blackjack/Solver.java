@@ -218,7 +218,7 @@ public class Solver {
 		}
 	}
 	
-	
+	// *** TODO: new tempDecks are not getting shuffled properly!!! ***
 	private static double getDescendentScore(Hand dealer, Hand hand, Hand others, GameState position, Deck deck, Move move) {
 		// For a particular game state (hand, dealer's card, and deck/other player's cards), if we have found a solution, return that solution
 		// otherwise, for each possible move, find the score for that move, and store the best outcome in the mapping, and return that solution
@@ -253,6 +253,14 @@ public class Solver {
 				// under "others". Then, eval hand2 just like hand1 was. When hand2 reaches what would be dealerPossibilities, instead add the cards in hand2 to
 				// hand1's gameState under "others". Then, proceed to the regular dealerPossibilities call for each hand and state. dealer's cards and probabilities 
 				// should be the same in both cases, but the chance of winning will vary depending on each hand
+			Hand hand2 = new Hand(List.of(hand.getHand().get(0)));
+			Hand dealer2 = new Hand(dealer.getHand());
+			List<Card> origOthers = others.getHand();
+			origOthers.add(hand.getHand().get(0));
+			Hand others2 = new Hand(origOthers);
+			GameState position2 = new GameState(dealer2, hand2, others2);
+			double splitScore = getSplitScore(dealer, hand, hand2, false, others, position, position2, deck, Move.SPLIT);
+			
 			
 			// check doubling outcomes
 			double doubleOutcome = 0.0;
@@ -358,6 +366,106 @@ public class Solver {
 			output += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(tempDealer, hand, others, position.updateDealer(card), tempDeck, move));
 		}
 		return output;
+	}
+	
+	private static double getSplitScore(GameState position1, GameState position2, boolean secondHand, Deck deck, Move move) {
+		Hand hand;
+		Hand dealer;
+		Hand others;
+		GameState position;
+		if (secondHand) {
+			hand = position2.getHand();
+			dealer = position2.getDealer();
+			others = position2.getOthers();
+			for (Card card : position1.getHand().getHand()) {
+				others.addCard(card);
+			}
+			position = position2;
+			position.updateOthers(hand1.getHand());
+		} else {
+			hand = position1.getHand();
+			dealer = position1.getDealer();
+			others = position2.getOthers();
+			for (Card card : position2.getHand().getHand()) {
+				others.addCard(card);
+			}
+			position = position1;
+			position.updateOthers(hand2.getHand());
+		}
+		if (accOutcomes.containsKey(position)) {
+			return accOutcomes.get(position); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
+		}
+//		// if we have busted, there is no point in continuing since we lose
+//		if ((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
+//			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
+//			accOutcomes.put(position, outcome);
+//			return outcome;
+//		}
+		double scoreOutcome = -0.5;
+		Move moveOutcome = Move.SURRENDER;
+		HashMap<Integer, Integer> cardCounts = deck.getCardCounts();
+		if (hand.getHand().size() == 2) {
+			// check doubling outcomes
+			double doubleOutcome = 0.0;
+			var tempSet = cardCounts.entrySet();
+			// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
+			for (var entry : tempSet) {
+				// update hand and deck appropriately
+				Card card = new Card(entry.getKey());
+				Hand tempHand = new Hand(hand.getHand());
+				tempHand.addCard(card);
+				ArrayList<Card> allRmCards = new ArrayList<>();
+				allRmCards.addAll(dealer.getHand());
+				allRmCards.addAll(hand.getHand());
+				allRmCards.addAll(others.getHand());
+				allRmCards.add(card);
+				Deck tempDeck = new Deck(allRmCards);
+				if (secondHand) {
+					Hand tempHand1 = new Hand(hand1.getHand());
+					Deck tempDeck1 = new Deck(allRmCards);
+					doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(dealer, tempHand1, others, position1, tempDeck1, move));
+					doubleOutcome += (entry.getValue()/tempDeck.getNumCards() * dealerPossibilities(dealer, tempHand, others, position.updateHand(card), tempDeck, Move.DOUBLE));
+				} else {
+					getSplitScore(dealer, tempHand, hand2, true, others, position.updateHand(card), position2.updateOthers(List.of(card)), tempDeck, Move.DOUBLE);
+				}
+			}
+			if (doubleOutcome >= scoreOutcome) {
+				scoreOutcome = doubleOutcome;
+				moveOutcome = Move.DOUBLE;
+			}
+		}
+		// --- Above should be complete ---
+		
+		// check staying outcomes
+		double stayOutcome = dealerPossibilities(dealer, hand, others, position, deck, Move.STAY);
+		if (stayOutcome >= scoreOutcome) {
+			scoreOutcome = stayOutcome;
+			moveOutcome = Move.STAY;
+		}
+		// check hitting outcomes
+		double hitOutcome = 0.0;
+		var tempSet = cardCounts.entrySet();
+		// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
+		for (var entry : tempSet) {
+			// update hand and deck appropriately
+			Card card = new Card(entry.getKey());
+			Hand tempHand = new Hand(hand.getHand());
+			tempHand.addCard(card);
+			ArrayList<Card> allRmCards = new ArrayList<>();
+			allRmCards.addAll(dealer.getHand());
+			allRmCards.addAll(hand.getHand());
+			allRmCards.addAll(others.getHand());
+			allRmCards.add(card);
+			Deck tempDeck = new Deck(allRmCards);
+			// recursively call this function
+			hitOutcome += (entry.getValue()/tempDeck.getNumCards() * getDescendentScore(dealer, tempHand, others, position.updateHand(card), tempDeck, Move.HIT));
+		}
+		if (hitOutcome >= scoreOutcome) {
+			scoreOutcome = hitOutcome;
+			moveOutcome = Move.HIT;
+		}
+		accOutcomes.put(position, scoreOutcome);
+		return scoreOutcome;
 	}
 	
 	/**

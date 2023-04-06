@@ -11,6 +11,18 @@ public class GameState {
 
 	private Hand others;
 	
+	public Hand getHand() {
+		return hand;
+	}
+
+	public Hand getDealer() {
+		return dealer;
+	}
+
+	public Hand getOthers() {
+		return others;
+	}
+
 	private ArrayList<Card> combinedCardState = new ArrayList<>();
 
 	public GameState(Hand dealer, Hand hand, Hand others) {
