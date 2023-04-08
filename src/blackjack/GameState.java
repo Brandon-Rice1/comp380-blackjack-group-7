@@ -14,14 +14,20 @@ public class GameState {
 	
 	private int numCards = 0;
 	
-	private HashMap<Integer, Integer> cardsRemaining = new HashMap<Integer, Integer>(10); 
+	private HashMap<Integer, Integer> cardsRemaining = new HashMap<Integer, Integer>(13); 
 
 	private ArrayList<Card> combinedCardState = new ArrayList<>();
+	
+	public GameState next = null;
+	
+	public GameState prev = null;
+	
+	public Move lastMove = null;
 
 	public GameState(Hand dealer, Hand hand, Hand others) {
-		for (int j = 1; j <= 10; j++) {
-			if (j == 10) {
-				cardsRemaining.put(j, 16);
+		for (int j = 1; j <= 14; j++) {
+			if (j == 12) {
+				continue;
 			} else {
 				cardsRemaining.put(j, 4);
 			}
@@ -56,7 +62,10 @@ public class GameState {
 		tempHand.addCard(card);
 //		this.hand.addCard(card);
 //		this.combinedCardState.add(card);
-		return new GameState(this.dealer, tempHand, this.others);
+		GameState temp = new GameState(this.dealer, tempHand, this.others);
+		temp.lastMove = this.lastMove;
+		temp.next = this.next;
+		return temp;
 	}
 	
 	public GameState updateDealer(Card card) {
@@ -64,15 +73,19 @@ public class GameState {
 		tempDealer.addCard(card);
 //		this.dealer.addCard(card);
 //		this.combinedCardState.add(card);
-		return new GameState(tempDealer, this.hand, this.others);
+		GameState temp = new GameState(tempDealer, this.hand, this.others);
+		temp.lastMove = this.lastMove;
+		temp.next = this.next;
+		return temp;
 	}
 	
-	public GameState updateOthers(List<Card> Cards) {
+	public GameState updateOthers(Card card) {
 		Hand tempOthers = new Hand(this.others.getHand());
-		for (Card card : Cards) {
-			tempOthers.addCard(card);
-		}
-		return new GameState(this.dealer, this.hand, tempOthers);
+		tempOthers.addCard(card);
+		GameState temp = new GameState(this.dealer, this.hand, tempOthers);
+		temp.lastMove = this.lastMove;
+		temp.next = this.next;
+		return temp;
 	}
 	
 	public Hand getHand() {
