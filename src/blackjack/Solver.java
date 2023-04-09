@@ -95,6 +95,17 @@ public class Solver {
 		return 0;
 	}
 
+	private static Move compareStrategiesHW5(GameState initial) {
+		final Hand dealer = initial.getDealer();
+		final Hand hand = initial.getHand();
+		// test the strategies
+		Move output = wikiStrat(dealer, hand);
+		if (!accOutcomes.containsKey(initial)) {
+			accOutcomes.put(initial, getDescendentScore(initial, Move.HIT));
+		}
+		return output;
+	}
+	
 	/**
 	 * implementing strategy 1 (the naive strategy in homework1)
 	 * 
@@ -203,6 +214,45 @@ public class Solver {
 		return strategy2(dealer, hand, deck, nextMove);
 	}
 	
+	private static Move wikiStrat(Hand dealer, Hand hand) {
+		// logic to decide next move and recursion
+		String lookup = "";
+		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
+			if (hand.hasAce()) {
+				lookup = pairs[9][dealer.getSoftTotal() - 2];
+			}
+			lookup = pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftTotal() - 2];
+		} else if (hand.hasAce()) {
+			// contains ace = soft table
+			if (hand.getSoftTotal() == 21) {
+				lookup = "STAY";
+			} else if (hand.getSoftTotal() < 21) {
+				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftTotal() - 2];
+			}
+		} else {
+			// no ace, no pair = hard table; or with ace > 21
+			if (hand.getHardTotal() == 21) {
+				lookup = "STAY";
+			} else if (hand.getHardTotal() > 21) {
+				throw new IllegalArgumentException();
+			} else {
+				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftTotal() - 2];
+			}
+		}
+		// for when there are multiple options
+		if (lookup.contains("/")) {
+			// if there are multiple options and there are 2 cards, take the first option
+			if (hand.getHand().size() == 2) {
+				lookup = lookup.split("/")[0];
+			} else { // otherwise, take the second
+				lookup = lookup.split("/")[1];
+			}
+		}
+//		Move nextMove = Move.valueOf(lookup);
+		return Move.valueOf(lookup);
+	}
+
+	
 	private static HashMap<GameState, Double> accOutcomes = new HashMap<>();
 	
 	private static HashMap<GameState, Move> moveOutcomes = new HashMap<GameState, Move>();
@@ -224,7 +274,6 @@ public class Solver {
 		return getDescendentScore(position, Move.HIT);
 	}
 	
-	// *** TODO: new tempDecks are not getting shuffled properly!!! ***
 	private static double getDescendentScore(GameState position, Move move) {
 		// For a particular game state (hand, dealer's card, and deck/other player's cards), if we have found a solution, return that solution
 		// otherwise, for each possible move, find the score for that move, and store the best outcome in the mapping, and return that solution
@@ -248,10 +297,12 @@ public class Solver {
 			accOutcomes.put(position, outcome);
 			return outcome;
 		}
-		double scoreOutcome = -0.5;
-		Move moveOutcome = Move.SURRENDER;
+		double scoreOutcome = Double.MIN_VALUE;
+		Move moveOutcome = null;
 		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
 		if (hand.getHand().size() == 2) {
+			scoreOutcome = -0.5;
+			moveOutcome = Move.SURRENDER;
 			
 			// TODO: implement splitting behavior (not easy b/c have to play both possibilities before dealerPossibilities)
 				// basically, want to play first hand until it doesn't hit. When that happens, play the second hand until it doesn't hit. Then dealer.
@@ -281,6 +332,7 @@ public class Solver {
 						Hand hand2 = new Hand(List.of(hand.getHand().get(0), new Card(entry2.getKey())));
 						Hand hand3 = null;
 						Hand hand4 = null;
+						// if the new hand can split again, need to recurse and go again
 						if (hand1.getHand().get(0) == hand1.getHand().get(1)) {
 							for (var entry3 : tempSet) {
 								if (entry3.getValue() == 0 || 
@@ -298,6 +350,7 @@ public class Solver {
 									}
 									hand1 = new Hand(List.of(hand1.getHand().get(0), new Card(entry3.getKey())));
 									hand3 = new Hand(List.of(hand1.getHand().get(1), new Card(entry3.getKey())));
+									// if, in addition to the first split, the second hand can split again, continue to split
 									if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
 										int tempCount4;
 										if (entry4.getKey() == entry3.getKey()) {
@@ -338,6 +391,7 @@ public class Solver {
 														(entry6.getKey() == entry5.getKey() && tempCount5 == 0)) {
 													continue;
 												}
+												// make all hands and all others accordingly
 												hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry5.getKey())));
 												hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry6.getKey())));
 												Hand dealer1 = new Hand(dealer.getHand());
@@ -383,6 +437,7 @@ public class Solver {
 											}
 										}
 									} else {
+										// only the first split hand split again, make all game states
 										Hand dealer1 = new Hand(dealer.getHand());
 										Hand dealer3 = new Hand(dealer.getHand());
 										Hand others1 = new Hand(others.getHand());
@@ -399,6 +454,7 @@ public class Solver {
 								}
 							}
 						} else if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
+							// only the second hand could split again
 							for (var entry7 : tempSet) {
 								if (entry7.getValue() == 0 || 
 										(entry7.getKey() == entry2.getKey() && tempCount2 == 0) || 
@@ -449,6 +505,7 @@ public class Solver {
 								}
 							}
 						} else {
+							// there is 1 split, the original one, only
 							Hand dealer2 = new Hand(dealer.getHand());
 							Hand others1 = new Hand(others.getHand());
 							others1.addCard(hand2.getHand().get(0));
@@ -509,6 +566,7 @@ public class Solver {
 			moveOutcome = Move.HIT;
 		}
 		accOutcomes.put(position, scoreOutcome);
+		moveOutcomes.put(position, moveOutcome);
 		return scoreOutcome;
 	}
 	
@@ -577,10 +635,12 @@ public class Solver {
 //			accOutcomes.put(position, outcome);
 //			return outcome;
 //		}
-		double scoreOutcome = -0.5;
-		Move moveOutcome = Move.SURRENDER;
+		double scoreOutcome = Double.MIN_VALUE;
+		Move moveOutcome = null;
 		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
 		if (hand.getHand().size() == 2) {
+			scoreOutcome = -0.5;
+			moveOutcome = Move.SURRENDER;
 			
 			// all splitting instances created by getDescendentScore
 			
@@ -672,6 +732,7 @@ public class Solver {
 			System.out.println("ERROR: a call to getSplitScore returned a value outside of acceptable bounds");
 		}
 		accOutcomes.put(position, scoreOutcome);
+		moveOutcomes.put(position, position.lastMove);
 		return scoreOutcome;
 	}
 	
@@ -748,21 +809,31 @@ public class Solver {
 		// should run the comparison 1,000,000 times per input
 //		System.out.println("Making tasks (this will take awhile)...");
 		AtomicInteger testCount = new AtomicInteger(0);
+//		String output = readIn.lines().parallel().map((elem) -> {
+//			if (elem.startsWith(",,")) {
+//				final int index = testCount.getAndIncrement();
+//				strat1Totals.add(new AtomicInteger());
+//				strat2Totals.add(new AtomicInteger());
+//				for (int i = 0; i < 2000000; i++) {
+//					compareStrategiesHW4(elem, index);
+//				}
+//				System.out.println("Iteration " + index + " complete");
+//				return ((double)strat1Totals.get(index).get() / 20000000.0) + "," + ((double)strat2Totals.get(index).get() / 20000000.0)
+//						+ "," + elem.substring(2, elem.length());
+//			} else {
+//				return elem;
+//			}
+//		}).collect(Collectors.joining("\r\n"));
 		String output = readIn.lines().parallel().map((elem) -> {
 			if (elem.startsWith(",,")) {
-				final int index = testCount.getAndIncrement();
-				strat1Totals.add(new AtomicInteger());
-				strat2Totals.add(new AtomicInteger());
-				for (int i = 0; i < 2000000; i++) {
-					compareStrategiesHW4(elem, index);
-				}
-				System.out.println("Iteration " + index + " complete");
-				return ((double)strat1Totals.get(index).get() / 20000000.0) + "," + ((double)strat2Totals.get(index).get() / 20000000.0)
-						+ "," + elem.substring(2, elem.length());
+				GameState initial = loadGameState(elem);
+				Move wikiMove = compareStrategiesHW5(initial);
+				return (moveOutcomes.get(initial) + "," + wikiMove + "," + elem.substring(2, elem.length()));
 			} else {
 				return elem;
 			}
 		}).collect(Collectors.joining("\r\n"));
+		
 		System.out.println("All lines solved");
 		try {
 			readIn.close();
@@ -776,7 +847,7 @@ public class Solver {
 			if (args.length > 1) {
 				writer = new FileWriter(new File(args[1]));
 			} else {
-				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/output4.csv"));
+				writer = new FileWriter(new File(System.getProperty("user.dir") + "/src/testFiles/outputHW5.csv"));
 			}
 			System.out.println("Writing to output...");
 			writer.write(output);
@@ -785,6 +856,28 @@ public class Solver {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static GameState loadGameState(String input) {
+		String[] hexCards = input.split(",");
+		// get the dealer's card and hand
+		Card dealerCard = new Card(hexCards[2]);
+		Hand dealer1 = new Hand(List.of(dealerCard));
+		// get our hand
+		Card yourCard1 = new Card(hexCards[11]);
+		Card yourCard2 = new Card(hexCards[12]);
+		Hand hand1 = new Hand(List.of(yourCard1, yourCard2));
+		// make two shuffled decks that are identical
+		// first, get all the cards that are not in the decks
+		ArrayList<Card> cards = new ArrayList<>();
+		for (String strCard : hexCards) {
+			if (strCard != "") {
+				cards.add(new Card(strCard));
+			}
+		}
+		// make "hands" of the other player cards
+		Hand others1 = new Hand(cards);
+		return new GameState(dealer1, hand1, others1);
 	}
 
 	/**
