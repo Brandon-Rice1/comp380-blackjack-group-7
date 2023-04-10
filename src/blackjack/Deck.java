@@ -40,6 +40,9 @@ public class Deck {
 		this();
 		deck.removeAll(cards);
 		for (Card card : cards) {
+			if (card == null) {
+				continue;
+			}
 			cardCounts.put(card.getHardValue(), cardCounts.get(card.getHardValue()) - 1);
 			numCards--;
 		}

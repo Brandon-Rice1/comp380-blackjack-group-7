@@ -95,11 +95,16 @@ public class Solver {
 		return 0;
 	}
 
-	private static Move compareStrategiesHW5(GameState initial) {
+	private static double compareStrategiesHW5(GameState initial) {
 		final Hand dealer = initial.getDealer();
 		final Hand hand = initial.getHand();
+		ArrayList<Card> drawnCards = new ArrayList<>(initial.getNumCards());
+		drawnCards.addAll(initial.getDealer().getHand());
+		drawnCards.addAll(initial.getHand().getHand());
+		drawnCards.addAll(initial.getOthers().getHand());
+		final Deck deck = new Deck(drawnCards);
 		// test the strategies
-		Move output = wikiStrat(dealer, hand);
+		double output = wikiStrat(dealer, hand, deck);
 		if (!accOutcomes.containsKey(initial)) {
 			accOutcomes.put(initial, getDescendentScore(initial, Move.HIT));
 		}
@@ -214,7 +219,7 @@ public class Solver {
 		return strategy2(dealer, hand, deck, nextMove);
 	}
 	
-	private static Move wikiStrat(Hand dealer, Hand hand) {
+	private static Double wikiStrat(Hand dealer, Hand hand, Deck deck) {
 		// logic to decide next move and recursion
 		String lookup = "";
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
@@ -248,8 +253,61 @@ public class Solver {
 				lookup = lookup.split("/")[1];
 			}
 		}
+		// if busted or odd behavior, stay
+		if (lookup == "") {
+			lookup = "STAY";
+		}
+		Move nextMove = Move.valueOf(lookup);
+		// Once a move is decided, determine if we need to recurse
+		// TODO move the below behavior to its own function (possibly) in order to make another function for splitting behavior...
+		switch(nextMove) {
+		case HIT:
+			hand.addCard(deck.draw());
+			return wikiStrat(dealer, hand, deck);
+		case SPLIT:
+			Hand hand1 = new Hand(List.of(hand.getHand().get(0), deck.draw()));
+			Hand hand2 = new Hand(List.of(hand.getHand().get(1), deck.draw()));
+			wikiStrat(dealer, hand1, deck);
+			while (dealer.getHand().size() > 2) {
+				deck.putBack(dealer.getHand().get(dealer.getHand().size()-1));
+			}
+			double output = wikiStrat(dealer, hand2, deck);
+			return output + wikiStrat(dealer, hand1, deck);
+		case DOUBLE:
+			hand.addCard(deck.draw());
+			break;
+		case SURRENDER:
+			return -0.5;
+		case STAY:
+			break;
+		}
+		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+			dealer.addCard(deck.draw());
+		}
+		double output = 0.0;
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
+		if(handTotal > 21) { // we busted
+			output = -1;
+		} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
+			output = -1;
+		} else if (dealerTotal == handTotal) { // tie
+			output = 0;
+		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
+			output = 1.5;
+		} else if(dealer.getHardTotal() > 21) { // dealer busted
+			output = 1;
+		} else if(dealerTotal < handTotal){ // we won
+			output = 1;
+		} else { // an outcome that should not be possible
+			System.out.println("Something went wrong when evaluating outcomes:");
+			System.out.println("\tHand: " + hand.toString());
+			System.out.println("\tDealer: " + dealer.toString());
+		}
+		output = (nextMove == Move.DOUBLE ? output * 2 : output);
+		return output;
 //		Move nextMove = Move.valueOf(lookup);
-		return Move.valueOf(lookup);
+//		return Move.valueOf(lookup);
 	}
 
 	
@@ -826,9 +884,19 @@ public class Solver {
 //		}).collect(Collectors.joining("\r\n"));
 		String output = readIn.lines().parallel().map((elem) -> {
 			if (elem.startsWith(",,")) {
-				GameState initial = loadGameState(elem);
-				Move wikiMove = compareStrategiesHW5(initial);
-				return (moveOutcomes.get(initial) + "," + wikiMove + "," + elem.substring(2, elem.length()));
+				final GameState initial = loadGameState(elem);
+				ArrayList<Card> drawnCards = new ArrayList<>();
+				drawnCards.addAll(initial.getDealer().getHand());
+				drawnCards.addAll(initial.getHand().getHand());
+				drawnCards.addAll(initial.getOthers().getHand());
+				double wikiOut = compareStrategiesHW5(initial);
+				for (int i = 1; i < 100; i++) {
+					final Deck deck = new Deck(drawnCards);
+					deck.shuffle();
+					wikiOut += wikiStrat(initial.getDealer(), initial.getHand(), deck);
+				}
+//				double wikiMove = compareStrategiesHW5(initial);
+				return (accOutcomes.get(initial) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
 			} else {
 				return elem;
 			}
