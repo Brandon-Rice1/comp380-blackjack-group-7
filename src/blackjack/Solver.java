@@ -895,7 +895,7 @@ public class Solver {
 					deck.shuffle();
 					wikiOut += wikiStrat(initial.getDealer(), initial.getHand(), deck);
 				}
-//				double wikiMove = compareStrategiesHW5(initial);
+				// accOutcomes only needs to run once since the output is always the same
 				return (accOutcomes.get(initial) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
 			} else {
 				return elem;
