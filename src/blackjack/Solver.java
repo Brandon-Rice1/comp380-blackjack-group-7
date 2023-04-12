@@ -102,9 +102,17 @@ public class Solver {
 		drawnCards.addAll(initial.getDealer().getHand());
 		drawnCards.addAll(initial.getHand().getHand());
 		drawnCards.addAll(initial.getOthers().getHand());
-		final Deck deck = new Deck(drawnCards);
+		final Deck deck1 = new Deck(drawnCards);
+		final Deck deck2 = new Deck(drawnCards);
+		Random rndSeed = new Random();
+		final long seed = rndSeed.nextLong();
+		Random rnd1 = new Random(seed);
+		Random rnd2 = new Random(seed);
+		deck1.shuffle(rnd1);
+		deck2.shuffle(rnd2);
+		assert deck1 == deck2;
 		// test the strategies
-		double output = wikiStrat(dealer, hand, deck);
+		double output = wikiStrat(dealer, hand, deck1);
 		if (!accOutcomes.containsKey(initial)) {
 			accOutcomes.put(initial, getDescendentScore(initial, Move.HIT));
 		}
@@ -315,21 +323,74 @@ public class Solver {
 	
 	private static HashMap<GameState, Move> moveOutcomes = new HashMap<GameState, Move>();
 	
-	private static double strategy3(Hand dealer, Hand hand, Hand others, Move move) {
-		// initialize variables
+	private static double strategyIdeal(Hand dealer, Hand hand, Hand others, Deck deck) {
+		// lookup the next move given our position; if null, run the code to make it not null
 		GameState position = new GameState(dealer, hand, others);
-		if (accOutcomes.containsKey(position)) {
-			return accOutcomes.get(position);
+		Move move = moveOutcomes.get(position);
+		if (move == null) {
+			getDescendentScore(position, Move.HIT);
+			move = moveOutcomes.get(position);
 		}
-		HashMap<Integer, Integer> cardsRemaining = new HashMap<>();
-		int numCards = 0;
-		for (var entry : position.getCardsRemaining().entrySet()) {
-			cardsRemaining.put(entry.getKey(), entry.getValue());
-			numCards += entry.getValue();
+		// based on the move to make, make that move
+		switch(move) {
+		case HIT:
+			hand.addCard(deck.draw());
+			return strategyIdeal(dealer, hand, others, deck);
+		case SPLIT:
+			Hand hand1 = new Hand(List.of(hand.getHand().get(0), deck.draw()));
+			Hand hand2 = new Hand(List.of(hand.getHand().get(1), deck.draw()));
+			Hand others1 = new Hand(others.getHand());
+			others1.addCard(hand2.getHand().get(1));
+			Hand others2 = new Hand(others.getHand());
+			others2.addCard(hand1.getHand().get(1));
+			// play through the whole thing with the first hand to find out what hand1 does
+			strategyIdeal(dealer, hand1, others1, deck);
+			// undo the dealer's draws since they can't have happened yet
+			while (dealer.getHand().size() > 2) {
+				deck.putBack(dealer.getHand().get(dealer.getHand().size()-1));
+			}
+			// update others2 to reflect what hand1 drew when solving
+			for(int i = 2; i < hand1.getHand().size(); i++) {
+				others2.addCard(hand1.getHand().get(i));
+			}
+			// score everything (for hand1 call, hand should already be at a termingatin state
+			double output = strategyIdeal(dealer, hand2, others2, deck);
+			return output + strategyIdeal(dealer, hand1, others1, deck);
+		case DOUBLE:
+			hand.addCard(deck.draw());
+			break;
+		case SURRENDER:
+			return -0.5;
+		case STAY:
+			break;
 		}
-		// begin recursive sequence
-//		return getDescendentScore(position, cardsRemaining, Move.HIT);
-		return getDescendentScore(position, Move.HIT);
+		// have the dealer draw from the deck
+		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+			dealer.addCard(deck.draw());
+		}
+		double output = 0.0;
+		// evaluate how this hand did
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
+		if(handTotal > 21) { // we busted
+			output = -1;
+		} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
+			output = -1;
+		} else if (dealerTotal == handTotal) { // tie
+			output = 0;
+		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
+			output = 1.5;
+		} else if(dealer.getHardTotal() > 21) { // dealer busted
+			output = 1;
+		} else if(dealerTotal < handTotal){ // we won
+			output = 1;
+		} else { // an outcome that should not be possible
+			System.out.println("Something went wrong when evaluating outcomes:");
+			System.out.println("\tHand: " + hand.toString());
+			System.out.println("\tDealer: " + dealer.toString());
+		}
+		output = (move == Move.DOUBLE ? output * 2 : output);
+		return output;
 	}
 	
 	private static double getDescendentScore(GameState position, Move move) {
@@ -885,18 +946,27 @@ public class Solver {
 		String output = readIn.lines().parallel().map((elem) -> {
 			if (elem.startsWith(",,")) {
 				final GameState initial = loadGameState(elem);
+				getDescendentScore(initial, Move.HIT);
 				ArrayList<Card> drawnCards = new ArrayList<>();
 				drawnCards.addAll(initial.getDealer().getHand());
 				drawnCards.addAll(initial.getHand().getHand());
 				drawnCards.addAll(initial.getOthers().getHand());
-				double wikiOut = compareStrategiesHW5(initial);
-				for (int i = 1; i < 100; i++) {
-					final Deck deck = new Deck(drawnCards);
-					deck.shuffle();
-					wikiOut += wikiStrat(initial.getDealer(), initial.getHand(), deck);
+				Random rndSeed = new Random();
+				double wikiOut = 0.0;
+				double idealOut = 0.0;
+				for (int i = 0; i < 100; i++) {
+					long seed = rndSeed.nextLong();
+					Random rnd1 = new Random(seed);
+					Random rnd2 = new Random(seed);
+					Deck deck1 = new Deck(drawnCards);
+					Deck deck2 = new Deck(drawnCards);
+					deck1.shuffle(rnd1);
+					deck2.shuffle(rnd2);
+					wikiOut += wikiStrat(initial.getDealer(), initial.getHand(), deck1);
+					idealOut += strategyIdeal(initial.getDealer(), initial.getHand(), initial.getOthers(), deck2);
 				}
 				// accOutcomes only needs to run once since the output is always the same
-				return (accOutcomes.get(initial) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
+				return ((idealOut / 100) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
 			} else {
 				return elem;
 			}
