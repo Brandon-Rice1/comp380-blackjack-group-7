@@ -445,185 +445,185 @@ public class Solver {
 						if (entry2.getValue() == 0 || (entry2.getKey() == entry1.getKey() && tempCount1 == 0)) {
 							continue;
 						}
-						int tempCount2 = (entry2.getKey() == entry1.getKey() ? tempCount1 - 1 : entry2.getValue() - 1);
+//						int tempCount2 = (entry2.getKey() == entry1.getKey() ? tempCount1 - 1 : entry2.getValue() - 1);
 						// draw new cards for both hands, update the states to reflect the new missing cards
 						Hand hand1 = new Hand(List.of(hand.getHand().get(0), new Card(entry1.getKey())));
 						Hand hand2 = new Hand(List.of(hand.getHand().get(0), new Card(entry2.getKey())));
-						Hand hand3 = null;
-						Hand hand4 = null;
-						// if the new hand can split again, need to recurse and go again
-						if (hand1.getHand().get(0) == hand1.getHand().get(1)) {
-							for (var entry3 : tempSet) {
-								if (entry3.getValue() == 0 || 
-										(entry3.getKey() == entry2.getKey() && tempCount2 == 0) || 
-										(entry3.getKey() == entry1.getKey() && tempCount1 == 0)) {
-									continue;
-								}
-								int tempCount3 = (entry3.getKey() == entry2.getKey() ? tempCount2 - 1 : (entry3.getKey() == entry1.getKey() ? tempCount1 - 1 : entry3.getValue() - 1));
-								for (var entry4 : tempSet) {
-									if (entry4.getValue() == 0 || 
-											(entry4.getKey() == entry2.getKey() && tempCount2 == 0) || 
-											(entry4.getKey() == entry1.getKey() && tempCount1 == 0) ||
-											(entry4.getKey() == entry3.getKey() && tempCount3 == 0)) {
-										continue;
-									}
-									hand1 = new Hand(List.of(hand1.getHand().get(0), new Card(entry3.getKey())));
-									hand3 = new Hand(List.of(hand1.getHand().get(1), new Card(entry3.getKey())));
-									// if, in addition to the first split, the second hand can split again, continue to split
-									if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
-										int tempCount4;
-										if (entry4.getKey() == entry3.getKey()) {
-											tempCount4 = tempCount3 - 1;
-										} else if (entry4.getKey() == entry2.getKey()) {
-											tempCount4 = tempCount2 - 1;
-										} else if (entry4.getKey() == entry1.getKey()) {
-											tempCount4 = tempCount1 - 1;
-										} else {
-											tempCount4 = entry4.getValue() - 1;
-										}
-										for (var entry5 : tempSet) {
-											if (entry5.getValue() == 0 || 
-													(entry5.getKey() == entry2.getKey() && tempCount2 == 0) || 
-													(entry5.getKey() == entry1.getKey() && tempCount1 == 0) ||
-													(entry5.getKey() == entry3.getKey() && tempCount3 == 0) || 
-													(entry5.getKey() == entry4.getKey() && tempCount4 == 0)) {
-												continue;
-											}
-											int tempCount5;
-											if (entry5.getKey() == entry4.getKey()) {
-												tempCount5 = tempCount4 - 1;
-											} else if (entry5.getKey() == entry3.getKey()) {
-												tempCount5 = tempCount3 - 1;
-											} else if (entry5.getKey() == entry2.getKey()) {
-												tempCount5 = tempCount2 - 1;
-											} else if (entry5.getKey() == entry1.getKey()) {
-												tempCount5 = tempCount1 - 1;
-											} else {
-												tempCount5 = entry5.getValue() - 1;
-											}
-											for (var entry6 : tempSet) {
-												if (entry6.getValue() == 0 || 
-														(entry6.getKey() == entry2.getKey() && tempCount2 == 0) || 
-														(entry6.getKey() == entry1.getKey() && tempCount1 == 0) ||
-														(entry6.getKey() == entry3.getKey() && tempCount3 == 0) || 
-														(entry6.getKey() == entry4.getKey() && tempCount4 == 0) || 
-														(entry6.getKey() == entry5.getKey() && tempCount5 == 0)) {
-													continue;
-												}
-												// make all hands and all others accordingly
-												hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry5.getKey())));
-												hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry6.getKey())));
-												Hand dealer1 = new Hand(dealer.getHand());
-												Hand dealer2 = new Hand(dealer.getHand());
-												Hand dealer3 = new Hand(dealer.getHand());
-												Hand dealer4 = new Hand(dealer.getHand());
-												Hand others1 = new Hand(others.getHand());
-												others1.addCard(hand2.getHand().get(0));
-												others1.addCard(hand2.getHand().get(1));
-												others1.addCard(hand3.getHand().get(0));
-												others1.addCard(hand3.getHand().get(1));
-												others1.addCard(hand4.getHand().get(0));
-												others1.addCard(hand4.getHand().get(1));
-												Hand others2 = new Hand(others.getHand());
-												others2.addCard(hand1.getHand().get(1));
-												others2.addCard(hand1.getHand().get(0));
-												others2.addCard(hand3.getHand().get(0));
-												others2.addCard(hand3.getHand().get(1));
-												others2.addCard(hand4.getHand().get(0));
-												others2.addCard(hand4.getHand().get(1));
-												Hand others3 = new Hand(others.getHand());
-												others3.addCard(hand1.getHand().get(1));
-												others3.addCard(hand1.getHand().get(0));
-												others3.addCard(hand2.getHand().get(0));
-												others3.addCard(hand2.getHand().get(1));
-												others3.addCard(hand4.getHand().get(0));
-												others3.addCard(hand4.getHand().get(1));
-												Hand others4 = new Hand(others.getHand());
-												others4.addCard(hand1.getHand().get(1));
-												others4.addCard(hand1.getHand().get(0));
-												others4.addCard(hand2.getHand().get(0));
-												others4.addCard(hand2.getHand().get(1));
-												others4.addCard(hand3.getHand().get(0));
-												others4.addCard(hand3.getHand().get(1));
-												GameState position1 = new GameState(hand1, dealer1, others1);
-												GameState position2 = new GameState(hand2, dealer2, others2);
-												GameState position3 = new GameState(hand3, dealer3, others3);
-												GameState position4 = new GameState(hand4, dealer4, others4);
-												position1.next = position3;
-												position3.next = position2;
-												position2.next = position4;
-												splitScore = getSplitScore(position1, Move.SPLIT, position1);
-											}
-										}
-									} else {
-										// only the first split hand split again, make all game states
-										Hand dealer1 = new Hand(dealer.getHand());
-										Hand dealer3 = new Hand(dealer.getHand());
-										Hand others1 = new Hand(others.getHand());
-										others1.addCard(hand3.getHand().get(0));
-										others1.addCard(hand3.getHand().get(1));
-										Hand others3 = new Hand(others.getHand());
-										others3.addCard(hand1.getHand().get(1));
-										others3.addCard(hand1.getHand().get(0));
-										GameState position1 = new GameState(hand1, dealer1, others1);
-										GameState position3 = new GameState(hand3, dealer3, others3);
-										position1.next = position3;
-										splitScore = getSplitScore(position1, Move.SPLIT, position1);
-									}
-								}
-							}
-						} else if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
-							// only the second hand could split again
-							for (var entry7 : tempSet) {
-								if (entry7.getValue() == 0 || 
-										(entry7.getKey() == entry2.getKey() && tempCount2 == 0) || 
-										(entry7.getKey() == entry1.getKey() && tempCount1 == 0)) {
-									continue;
-								}
-								int tempCount7;
-								if (entry7.getKey() == entry2.getKey()) {
-									tempCount7 = tempCount2 - 1;
-								} else if (entry7.getKey() == entry1.getKey()) {
-									tempCount7 = tempCount1 - 1;
-								} else {
-									tempCount7 = entry7.getValue() - 1;
-								}
-								for (var entry8 : tempSet) {
-									if (entry8.getValue() == 0 || 
-											(entry8.getKey() == entry2.getKey() && tempCount2 == 0) || 
-											(entry8.getKey() == entry1.getKey() && tempCount1 == 0) ||
-											(entry8.getKey() == entry7.getKey() && tempCount7 == 0)) {
-										continue;
-									}
-									hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry7.getKey())));
-									hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry8.getKey())));
-									Hand dealer1 = new Hand(dealer.getHand());
-									Hand dealer2 = new Hand(dealer.getHand());
-									Hand dealer4 = new Hand(dealer.getHand());
-									Hand others1 = new Hand(others.getHand());
-									others1.addCard(hand2.getHand().get(0));
-									others1.addCard(hand2.getHand().get(1));
-									others1.addCard(hand4.getHand().get(0));
-									others1.addCard(hand4.getHand().get(1));
-									Hand others2 = new Hand(others.getHand());
-									others2.addCard(hand1.getHand().get(1));
-									others2.addCard(hand1.getHand().get(0));
-									others2.addCard(hand4.getHand().get(0));
-									others2.addCard(hand4.getHand().get(1));
-									Hand others4 = new Hand(others.getHand());
-									others4.addCard(hand1.getHand().get(1));
-									others4.addCard(hand1.getHand().get(0));
-									others4.addCard(hand2.getHand().get(0));
-									others4.addCard(hand2.getHand().get(1));
-									GameState position1 = new GameState(hand1, dealer1, others1);
-									GameState position2 = new GameState(hand2, dealer2, others2);
-									GameState position4 = new GameState(hand4, dealer4, others4);
-									position1.next = position2;
-									position2.next = position4;
-									splitScore = getSplitScore(position1, Move.SPLIT, position1);
-								}
-							}
-						} else {
+//						Hand hand3 = null;
+//						Hand hand4 = null;
+//						// if the new hand can split again, need to recurse and go again
+//						if (hand1.getHand().get(0) == hand1.getHand().get(1)) {
+//							for (var entry3 : tempSet) {
+//								if (entry3.getValue() == 0 || 
+//										(entry3.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//										(entry3.getKey() == entry1.getKey() && tempCount1 == 0)) {
+//									continue;
+//								}
+//								int tempCount3 = (entry3.getKey() == entry2.getKey() ? tempCount2 - 1 : (entry3.getKey() == entry1.getKey() ? tempCount1 - 1 : entry3.getValue() - 1));
+//								for (var entry4 : tempSet) {
+//									if (entry4.getValue() == 0 || 
+//											(entry4.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//											(entry4.getKey() == entry1.getKey() && tempCount1 == 0) ||
+//											(entry4.getKey() == entry3.getKey() && tempCount3 == 0)) {
+//										continue;
+//									}
+//									hand1 = new Hand(List.of(hand1.getHand().get(0), new Card(entry3.getKey())));
+//									hand3 = new Hand(List.of(hand1.getHand().get(1), new Card(entry3.getKey())));
+//									// if, in addition to the first split, the second hand can split again, continue to split
+//									if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
+//										int tempCount4;
+//										if (entry4.getKey() == entry3.getKey()) {
+//											tempCount4 = tempCount3 - 1;
+//										} else if (entry4.getKey() == entry2.getKey()) {
+//											tempCount4 = tempCount2 - 1;
+//										} else if (entry4.getKey() == entry1.getKey()) {
+//											tempCount4 = tempCount1 - 1;
+//										} else {
+//											tempCount4 = entry4.getValue() - 1;
+//										}
+//										for (var entry5 : tempSet) {
+//											if (entry5.getValue() == 0 || 
+//													(entry5.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//													(entry5.getKey() == entry1.getKey() && tempCount1 == 0) ||
+//													(entry5.getKey() == entry3.getKey() && tempCount3 == 0) || 
+//													(entry5.getKey() == entry4.getKey() && tempCount4 == 0)) {
+//												continue;
+//											}
+//											int tempCount5;
+//											if (entry5.getKey() == entry4.getKey()) {
+//												tempCount5 = tempCount4 - 1;
+//											} else if (entry5.getKey() == entry3.getKey()) {
+//												tempCount5 = tempCount3 - 1;
+//											} else if (entry5.getKey() == entry2.getKey()) {
+//												tempCount5 = tempCount2 - 1;
+//											} else if (entry5.getKey() == entry1.getKey()) {
+//												tempCount5 = tempCount1 - 1;
+//											} else {
+//												tempCount5 = entry5.getValue() - 1;
+//											}
+//											for (var entry6 : tempSet) {
+//												if (entry6.getValue() == 0 || 
+//														(entry6.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//														(entry6.getKey() == entry1.getKey() && tempCount1 == 0) ||
+//														(entry6.getKey() == entry3.getKey() && tempCount3 == 0) || 
+//														(entry6.getKey() == entry4.getKey() && tempCount4 == 0) || 
+//														(entry6.getKey() == entry5.getKey() && tempCount5 == 0)) {
+//													continue;
+//												}
+//												// make all hands and all others accordingly
+//												hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry5.getKey())));
+//												hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry6.getKey())));
+//												Hand dealer1 = new Hand(dealer.getHand());
+//												Hand dealer2 = new Hand(dealer.getHand());
+//												Hand dealer3 = new Hand(dealer.getHand());
+//												Hand dealer4 = new Hand(dealer.getHand());
+//												Hand others1 = new Hand(others.getHand());
+//												others1.addCard(hand2.getHand().get(0));
+//												others1.addCard(hand2.getHand().get(1));
+//												others1.addCard(hand3.getHand().get(0));
+//												others1.addCard(hand3.getHand().get(1));
+//												others1.addCard(hand4.getHand().get(0));
+//												others1.addCard(hand4.getHand().get(1));
+//												Hand others2 = new Hand(others.getHand());
+//												others2.addCard(hand1.getHand().get(1));
+//												others2.addCard(hand1.getHand().get(0));
+//												others2.addCard(hand3.getHand().get(0));
+//												others2.addCard(hand3.getHand().get(1));
+//												others2.addCard(hand4.getHand().get(0));
+//												others2.addCard(hand4.getHand().get(1));
+//												Hand others3 = new Hand(others.getHand());
+//												others3.addCard(hand1.getHand().get(1));
+//												others3.addCard(hand1.getHand().get(0));
+//												others3.addCard(hand2.getHand().get(0));
+//												others3.addCard(hand2.getHand().get(1));
+//												others3.addCard(hand4.getHand().get(0));
+//												others3.addCard(hand4.getHand().get(1));
+//												Hand others4 = new Hand(others.getHand());
+//												others4.addCard(hand1.getHand().get(1));
+//												others4.addCard(hand1.getHand().get(0));
+//												others4.addCard(hand2.getHand().get(0));
+//												others4.addCard(hand2.getHand().get(1));
+//												others4.addCard(hand3.getHand().get(0));
+//												others4.addCard(hand3.getHand().get(1));
+//												GameState position1 = new GameState(hand1, dealer1, others1);
+//												GameState position2 = new GameState(hand2, dealer2, others2);
+//												GameState position3 = new GameState(hand3, dealer3, others3);
+//												GameState position4 = new GameState(hand4, dealer4, others4);
+//												position1.next = position3;
+//												position3.next = position2;
+//												position2.next = position4;
+//												splitScore = getSplitScore(position1, Move.SPLIT, position1);
+//											}
+//										}
+//									} else {
+//										// only the first split hand split again, make all game states
+//										Hand dealer1 = new Hand(dealer.getHand());
+//										Hand dealer3 = new Hand(dealer.getHand());
+//										Hand others1 = new Hand(others.getHand());
+//										others1.addCard(hand3.getHand().get(0));
+//										others1.addCard(hand3.getHand().get(1));
+//										Hand others3 = new Hand(others.getHand());
+//										others3.addCard(hand1.getHand().get(1));
+//										others3.addCard(hand1.getHand().get(0));
+//										GameState position1 = new GameState(hand1, dealer1, others1);
+//										GameState position3 = new GameState(hand3, dealer3, others3);
+//										position1.next = position3;
+//										splitScore = getSplitScore(position1, Move.SPLIT, position1);
+//									}
+//								}
+//							}
+//						} else if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
+//							// only the second hand could split again
+//							for (var entry7 : tempSet) {
+//								if (entry7.getValue() == 0 || 
+//										(entry7.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//										(entry7.getKey() == entry1.getKey() && tempCount1 == 0)) {
+//									continue;
+//								}
+//								int tempCount7;
+//								if (entry7.getKey() == entry2.getKey()) {
+//									tempCount7 = tempCount2 - 1;
+//								} else if (entry7.getKey() == entry1.getKey()) {
+//									tempCount7 = tempCount1 - 1;
+//								} else {
+//									tempCount7 = entry7.getValue() - 1;
+//								}
+//								for (var entry8 : tempSet) {
+//									if (entry8.getValue() == 0 || 
+//											(entry8.getKey() == entry2.getKey() && tempCount2 == 0) || 
+//											(entry8.getKey() == entry1.getKey() && tempCount1 == 0) ||
+//											(entry8.getKey() == entry7.getKey() && tempCount7 == 0)) {
+//										continue;
+//									}
+//									hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry7.getKey())));
+//									hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry8.getKey())));
+//									Hand dealer1 = new Hand(dealer.getHand());
+//									Hand dealer2 = new Hand(dealer.getHand());
+//									Hand dealer4 = new Hand(dealer.getHand());
+//									Hand others1 = new Hand(others.getHand());
+//									others1.addCard(hand2.getHand().get(0));
+//									others1.addCard(hand2.getHand().get(1));
+//									others1.addCard(hand4.getHand().get(0));
+//									others1.addCard(hand4.getHand().get(1));
+//									Hand others2 = new Hand(others.getHand());
+//									others2.addCard(hand1.getHand().get(1));
+//									others2.addCard(hand1.getHand().get(0));
+//									others2.addCard(hand4.getHand().get(0));
+//									others2.addCard(hand4.getHand().get(1));
+//									Hand others4 = new Hand(others.getHand());
+//									others4.addCard(hand1.getHand().get(1));
+//									others4.addCard(hand1.getHand().get(0));
+//									others4.addCard(hand2.getHand().get(0));
+//									others4.addCard(hand2.getHand().get(1));
+//									GameState position1 = new GameState(hand1, dealer1, others1);
+//									GameState position2 = new GameState(hand2, dealer2, others2);
+//									GameState position4 = new GameState(hand4, dealer4, others4);
+//									position1.next = position2;
+//									position2.next = position4;
+//									splitScore = getSplitScore(position1, Move.SPLIT, position1);
+//								}
+//							}
+//						} else {
 							// there is 1 split, the original one, only
 							Hand dealer2 = new Hand(dealer.getHand());
 							Hand others1 = new Hand(others.getHand());
@@ -636,7 +636,7 @@ public class Solver {
 							GameState position2 = new GameState(dealer2, hand2, others2);
 							position1.next = position2;
 							splitScore = getSplitScore(position1, Move.SPLIT, position1);
-						}
+//						}
 					}
 				}
 				if (splitScore >= scoreOutcome) {
@@ -762,6 +762,54 @@ public class Solver {
 			moveOutcome = Move.SURRENDER;
 			
 			// all splitting instances created by getDescendentScore
+			// above is incorrect
+			// if this hand should split, try all splitting possibilities
+			if (hand.getHand().get(0) == hand.getHand().get(1)) {
+				double splitScore = 0.0;
+				var tempSet = cardCounts.entrySet();
+				for (var entry1 : tempSet) {
+					if (entry1.getValue() == 0) {
+						continue;
+					}
+					int tempCount1 = entry1.getValue() - 1;
+					for (var entry2 : tempSet) {
+						if (entry2.getValue() == 0 || (entry2.getKey() == entry1.getKey() && tempCount1 == 0)) {
+							continue;
+						}
+						// draw new cards for both hands, update the states to reflect the new missing cards
+						Hand hand1 = new Hand(List.of(hand.getHand().get(0), new Card(entry1.getKey())));
+						Hand hand2 = new Hand(List.of(hand.getHand().get(0), new Card(entry2.getKey())));
+						Hand dealer1 = new Hand(dealer.getHand());
+						Hand dealer2 = new Hand(dealer.getHand());
+						Hand others1 = new Hand(others.getHand());
+						others1.addCard(hand2.getHand().get(0));
+						others1.addCard(hand2.getHand().get(1));
+						List<Card> origOthers = others.getHand();
+						origOthers.addAll(hand1.getHand());
+						Hand others2 = new Hand(origOthers);
+						GameState position1 = new GameState(dealer1, hand1, others1);
+						GameState position2 = new GameState(dealer2, hand2, others2);
+						// set the first new hand to point to the second
+						position1.next = position2;
+						// make copies of all other remaining hands to play, and add them to the chain
+						GameState tempOrig = position;
+						GameState tempDupe = position2;
+						while (tempOrig != null) {
+							Hand newOthers = tempOrig.getOthers();
+							newOthers.addCard(hand1.getHand().get(1));
+							newOthers.addCard(hand2.getHand().get(1));
+							tempDupe.next = new GameState(tempOrig.getDealer(), tempOrig.getHand(), newOthers);
+							tempOrig = tempOrig.next;
+							tempDupe = tempDupe.next;
+						}
+						splitScore = getSplitScore(position1, Move.SPLIT, position1);
+					}
+				}
+				if (splitScore >= scoreOutcome) {
+					scoreOutcome = splitScore;
+					moveOutcome = Move.SPLIT;
+				}
+			}
 			
 			// check doubling outcomes
 			double doubleOutcome = 0.0;
