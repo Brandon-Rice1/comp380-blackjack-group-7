@@ -62,85 +62,6 @@ public class Solver {
 	
 	private static AtomicInteger numTrials = new AtomicInteger();
 
-//	/**
-//	 * The naive strategy for determining if we should hit or stay
-//	 * 
-//	 * @param input the raw csv input line
-//	 * @return a properly formatted for csv line that includes our decision
-//	 */
-//	private static String strategy(String input) {
-//		// ignore the 'comment' lines in the input
-//		if (input.contains("==>")) {
-//			return input;
-//		}
-//		// initializes the card objects
-//		String[] hexCards = input.split(",");
-//		Card dealer;
-//		if (hexCards[1].length() > 0) {
-//			dealer = new Card(hexCards[1]);
-//		} else {
-//			dealer = null;
-//		}
-//		ArrayList<Card> cards = new ArrayList<>();
-//		for (int i = 8; i < hexCards.length; i++) {
-//			cards.add(new Card(hexCards[i]));
-//		}
-//		Hand hand = new Hand(hexCards);
-//		// homework 2 strategy
-////		if (hand.getHardTotal() > 21) {
-////			System.out.println("ERROR: hand's hard total was greater than 21, which is not covered under the tables");
-////			System.exit(-2);
-////		}
-//		// pair of same card = pairs table, which only has single options
-//		// alternate idea: instead of arrays, use nested dictionaries (hand, dealer,
-//		// hasAce)
-//		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
-//			if (hand.hasAce()) {
-//				return pairs[9][dealer.getSoftValue() - 2] + input;
-//			}
-//			return pairs[(hand.getSoftTotal() / 2) - 2][dealer.getSoftValue() - 2] + input;
-//		}
-//		String lookup = "";
-//		if (hand.hasAce()) {
-//			// contains ace = soft table
-//			if (hand.getSoftTotal() == 21) {
-//				lookup = "STAY";
-//			} else if (hand.getSoftTotal() < 21) {
-//				lookup = soft[(hand.getSoftTotal() - 11) - 2][dealer.getSoftValue() - 2];
-//			}
-//		}
-//		// if no ace OR ace as 11 was too big, use the hard table (ace is 1)
-//		if (lookup.equals("")) {
-//			// no ace, no pair = hard table
-//			if (hand.getHardTotal() == 21) {
-//				lookup = "STAY";
-//			} else if (hand.getHardTotal() > 21) {
-//				throw new IllegalArgumentException();
-//			}
-//			else {
-//				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftValue() - 2];
-//			}
-//		}
-//		// alternate idea: reverse lookup, split on '/', reverse each half of the
-//		// string; only 1 condition (if 2 cards and 2nd is non-empty)
-//		if (lookup.contains("/")) {
-//			// if there are multiple options and there are 2 cards, take the first option
-//			if (hand.getHand().size() == 2) {
-//				lookup =  lookup.split("/")[0];
-//			} else { // otherwise, take the second
-//				lookup = lookup.split("/")[1];
-//			}
-//		}
-//		return lookup + input;
-////		// homework 1 strategy below
-////		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
-////			return "STAY" + input;
-////		} else {
-////			return "HIT" + input;
-////		}
-//
-//	}
-
 	/**
 	 *
 	 * @param input an input line of the csv file
@@ -176,7 +97,7 @@ public class Solver {
 			deck2.draw();
 		}
 		// test the strategies
-		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT));
+		total1.addAndGet(strategy1(dealer1, hand1, deck1, Move.HIT, seed));
 		total2.addAndGet(strategy2(dealer2, hand2, deck2, Move.HIT));
 		return 0;
 	}
@@ -189,26 +110,40 @@ public class Solver {
 	 * @param move the move taken by the player
 	 * @return the strategy1 results of the case
 	 */
-	private static int strategy1(Hand dealer, Hand hand, Deck deck, Move move) {
+	private static int strategy1(Hand dealer, Hand hand, Deck deck, Move move, Long seed) {
 		// condition to return if hand is final
-		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
+		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER) {// || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
-			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
+			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
+			if (temp > 80 || temp < -80) {
+				System.out.println("ERROR: invlid outcome total");
+				System.out.println("\toutcome: " + temp);
+				System.out.println("\thand: " + hand.getHand());
+				System.out.println("\tdealer: " + dealer.getHand());
+			}
 			if (temp > maxGain1.get()) {
-				maxGain1.addAndGet(temp);
+//				maxGain1.addAndGet(temp);
+				maxGain1.set(temp);
 			}
 			if (temp < maxLoss1.get()) {
-				maxLoss1.addAndGet(temp);
+//				maxLoss1.addAndGet(temp);
+				maxLoss1.set(Math.min(maxLoss1.get(), temp));
+				if (temp > 80 || temp < -80) {
+					System.out.println("ERROR: invlid outcome total");
+					System.out.println("\toutcome: " + temp);
+					System.out.println("\thand: " + hand.getHand());
+					System.out.println("\tdealer: " + dealer.getHand());
+				}
 			}
 			return temp;
 		}
 		// logic to decide next move and recurse
 		if (hand.getHardTotal() > 11 || hand.getSoftTotal() > 17) {
-			return strategy1(dealer, hand, deck, Move.STAY);
+			return strategy1(dealer, hand, deck, Move.STAY, seed);
 		} else {
 			hand.addCard(deck.draw());
-			return strategy1(dealer, hand, deck, Move.HIT);
+			return strategy1(dealer, hand, deck, Move.HIT, seed);
 		}
 	}
 
@@ -223,13 +158,15 @@ public class Solver {
 	private static int strategy2(Hand dealer, Hand hand, Deck deck, Move move) {
 		if (move == Move.DOUBLE || move == Move.STAY || move == Move.SURRENDER || hand.getHardTotal() >= 21) {
 			// logic to determine value of hand to return
-			Double outcome = evaluateOutcome(dealer, hand, deck, move) * 10;
+			Double outcome = evaluateOutcomeRevised(dealer, hand, deck, move) * 10;
 			int temp = outcome.intValue();
 			if (temp > maxGain2.get()) {
-				maxGain2.addAndGet(temp);
+//				maxGain2.addAndGet(temp);
+				maxGain2.set(temp);
 			}
 			if (temp < maxLoss2.get()) {
-				maxLoss2.addAndGet(temp);
+//				maxLoss2.addAndGet(temp);
+				maxLoss2.set(temp);
 			}
 			return temp;
 		}
@@ -286,81 +223,137 @@ public class Solver {
 			// run strategy for other hand
 			int outcome2 = strategy2(dealer2, hand2, deck, nextMove);
 			// evaluate the first hand based on the actual, final dealer's hand
-			Double outcome1 = (evaluateOutcome(dealer2, hand, deck, move) * 10);
+			Double outcome1 = (evaluateOutcomeRevised(dealer2, hand, deck, move) * 10);
 			int total = outcome1.intValue() + outcome2;
-			if (total > maxGain1.get()) {
-				maxGain1.addAndGet(total);
+			if (total > maxGain2.get()) {
+				maxGain2.addAndGet(total);
 			}
-			if (total < maxLoss1.get()) {
-				maxLoss1.addAndGet(total);
+			if (total < maxLoss2.get()) {
+				maxLoss2.addAndGet(total);
 			}
 			return total;
 		}
 		return strategy2(dealer, hand, deck, nextMove);
 	}
 
-	/**
-	 * evaluate the outcomes of a game situation after implementing the strategy
-	 * @param dealer the dealer's card
-	 * @param hand cards in the hand
-	 * @param deck a list of cards
-	 * @param move the move taken by the player
-	 * @return the outcome of the current hand
-	 */
-	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
-		// dealer makes the move(s)
-		while((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+//	/**
+//	 * evaluate the outcomes of a game situation after implementing the strategy
+//	 * @param dealer the dealer's card
+//	 * @param hand cards in the hand
+//	 * @param deck a list of cards
+//	 * @param move the move taken by the player
+//	 * @return the outcome of the current hand
+//	 */
+//	private static Double evaluateOutcome(Hand dealer, Hand hand, Deck deck, Move move) {
+//		// dealer makes the move(s)
+//		while((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
+//			dealer.addCard(deck.draw());
+//		}
+//		// you have blackjack
+//		if (hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
+//			// dealer has blackjack
+//			if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
+//				return 0.0;
+//			} else { // dealer doesn't have blackjack
+//				// you doubled or didn't
+//				if (move == Move.DOUBLE) {
+//					return 3.0;
+//				} else {
+//					return 1.5;
+//				}
+//			}
+//		// if the dealer has blackjack and you don't
+//		} else if(dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
+//			return -1.0;
+//		// if you busted
+//		} else if(hand.getHardTotal() > 21) {
+//			if (move == Move.DOUBLE) {
+//				return -2.0;
+//			} else {
+//				return -1.0;
+//			}
+//		// if you surrendered
+//		} else if (move == Move.SURRENDER) {
+//			return -0.5;
+//		// Comparing non-blackjack hands
+//		// hands are the same
+//		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) == 
+//				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+//			return 0.0;
+//		// dealer wins
+//		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) > 
+//				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
+//			if (move == Move.DOUBLE) {
+//				return -2.0;
+//			} else {
+//				return -1.0;
+//			}
+//		// you win
+//		} else {
+//			if (move == Move.DOUBLE) {
+//				return 2.0;
+//			} else {
+//				return 1.0;
+//			}
+//		}
+//	}
+
+	private static Double evaluateOutcomeRevised(Hand dealer, Hand hand, Deck deck, Move move) {
+		while ((dealer.hasAce() && dealer.getSoftTotal() <= 17) || dealer.getHardTotal() < 17) {
 			dealer.addCard(deck.draw());
 		}
-		// you have blackjack
-		if (hand.getSoftTotal() == 21 && hand.getHand().size() == 2) {
-			// dealer has blackjack
-			if (dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
-				return 0.0;
-			} else { // dealer doesn't have blackjack
-				// you doubled or didn't
-				if (move == Move.DOUBLE) {
-					return 3.0;
-				} else {
-					return 1.5;
-				}
-			}
-		// if the dealer has blackjack and you don't
-		} else if(dealer.getSoftTotal() == 21 && dealer.getHand().size() == 2) {
-			return -1.0;
-		// if you busted
-		} else if(hand.getHardTotal() > 21) {
-			if (move == Move.DOUBLE) {
-				return -2.0;
-			} else {
-				return -1.0;
-			}
-		// if you surrendered
-		} else if (move == Move.SURRENDER) {
+		if (move == Move.SURRENDER) {
 			return -0.5;
-		// Comparing non-blackjack hands
-		// hands are the same
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) == 
-				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
-			return 0.0;
-		// dealer wins
-		} else if ((dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal()) > 
-				(hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal())) {
-			if (move == Move.DOUBLE) {
-				return -2.0;
-			} else {
-				return -1.0;
-			}
-		// you win
-		} else {
-			if (move == Move.DOUBLE) {
-				return 2.0;
-			} else {
-				return 1.0;
-			}
 		}
+		double output = 0.0;
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
+//		if(handTotal > 21) { // we busted
+//			output = -1;
+//		} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
+//			output = -1;
+//		} else if (dealerTotal == handTotal) { // tie
+//			output = 0;
+//		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
+//			output = 1.5;
+//		} else if(dealer.getHardTotal() > 21) { // dealer busted
+//			output = 1;
+//		} else if(dealerTotal < handTotal){ // we won
+//			output = 1;
+//		} else { // an outcome that should not be possible
+//			System.out.println("Something went wrong when evaluating outcomes:");
+//			System.out.println("\tHand: " + hand.toString());
+//			System.out.println("\tDealer: " + dealer.toString());
+//		}
+		
+		if (handTotal == dealerTotal && handTotal == 21 && dealer.getHand().size() == 2 && hand.getHand().size() == 2) {
+			output = 0.0;
+		} else if (handTotal == 21 && hand.getHand().size() == 2 && (dealer.getHand().size() != 2 || dealerTotal != 21)) {
+			output = (move == Move.DOUBLE ? 3 : 1.5);
+		} else if (dealerTotal == 21 && dealer.getHand().size() == 2 && (hand.getHand().size() != 2 || handTotal != 21)) {
+			output = -1.0;
+//			output = (move == Move.DOUBLE ? -2.0 : -1.0);
+		} else if (handTotal > 21) {
+			output = (move == Move.DOUBLE ? -2.0 : -1.0);
+		} else if (move == Move.SURRENDER) {
+			output = -0.5;
+		} else if (dealerTotal == handTotal) {
+			output = 0.0;
+		} else if (dealerTotal > handTotal && dealerTotal <= 21) {
+			output = (move == Move.DOUBLE ? -2.0 : -1.0);
+		} else if (dealerTotal < handTotal) {
+			output = (move == Move.DOUBLE ? 2.0 : 1.0);
+		} else if(dealerTotal > 21 && handTotal <= 21) {
+			output = (move == Move.DOUBLE ? 2.0 : 1.0);
+		} else { // an outcome that should not be possible
+			System.out.println("Something went wrong when evaluating outcomes:");
+			System.out.println("\tHand: " + hand.toString());
+			System.out.println("\tDealer: " + dealer.toString());
+		}
+		return output;
+		
+//		return (move == Move.DOUBLE ? output * 2 : output);
 	}
-
 	
 	/**
 	 * Reads from a csv file, uses the strategy on each game, and writes a new
@@ -397,8 +390,13 @@ public class Solver {
 //		double total = readIn.lines().parallel().map(elem -> compareStrategies(elem)).collect(Collectors.summingDouble((elem)->elem));
 //		readIn.lines().parallel().forEachOrdered(elem -> compareStrategies(elem));
 		// should run the comparison 100,000,000 times
-		ExecutorService tasks = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		ExecutorService tasks = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
 		System.out.println("Making tasks (this will take awhile)...");
+////		Random why = new Random();
+////		Long sigh = why.nextLong();
+//		Long sigh = -3869327141277476901L;
+//		Random rndSeed = new Random(sigh);
+//		System.out.println("seed: " + sigh);
 		for (int i = 0; i < 100000000; i++) {
 //			System.out.println("Running iteration: " + i);
 			tasks.execute(() -> compareStrategies());
@@ -406,7 +404,9 @@ public class Solver {
 		tasks.shutdown();
 		try {
 			System.out.println("Waiting on tasks to complete...");
-			tasks.awaitTermination(5, TimeUnit.MINUTES);
+			if(!tasks.awaitTermination(10, TimeUnit.MINUTES)) {
+				System.out.println("ERROR: took too long");
+			};
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
@@ -430,9 +430,11 @@ public class Solver {
 			writer.write(output);
 			System.out.println("Done writing.");
 			writer.close();
+			System.out.println("Done closing.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.exit(0);
 	}
 
 	/**
