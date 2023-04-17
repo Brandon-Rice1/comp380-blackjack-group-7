@@ -8,7 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+//import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -64,7 +64,7 @@ public class Solver {
 		// first, get all the cards that are not in the decks
 		ArrayList<Card> cards = new ArrayList<>();
 		for (String strCard : hexCards) {
-			if (strCard != "") {
+			if (!strCard.equals("")) {
 				cards.add(new Card(strCard));
 			}
 		}
@@ -262,7 +262,7 @@ public class Solver {
 			}
 		}
 		// if busted or odd behavior, stay
-		if (lookup == "") {
+		if (lookup.equals("")) {
 			lookup = "STAY";
 		}
 		Move nextMove = Move.valueOf(lookup);
@@ -442,7 +442,7 @@ public class Solver {
 					}
 					int tempCount1 = entry1.getValue() - 1;
 					for (var entry2 : tempSet) {
-						if (entry2.getValue() == 0 || (entry2.getKey() == entry1.getKey() && tempCount1 == 0)) {
+						if (entry2.getValue() == 0 || (entry2.getKey().equals(entry1.getKey()) && tempCount1 == 0)) {
 							continue;
 						}
 //						int tempCount2 = (entry2.getKey() == entry1.getKey() ? tempCount1 - 1 : entry2.getValue() - 1);
@@ -773,7 +773,7 @@ public class Solver {
 					}
 					int tempCount1 = entry1.getValue() - 1;
 					for (var entry2 : tempSet) {
-						if (entry2.getValue() == 0 || (entry2.getKey() == entry1.getKey() && tempCount1 == 0)) {
+						if (entry2.getValue() == 0 || (entry2.getKey().equals(entry1.getKey()) && tempCount1 == 0)) {
 							continue;
 						}
 						// draw new cards for both hands, update the states to reflect the new missing cards
@@ -1057,7 +1057,7 @@ public class Solver {
 		// first, get all the cards that are not in the decks
 		ArrayList<Card> cards = new ArrayList<>();
 		for (String strCard : hexCards) {
-			if (strCard != "") {
+			if (!strCard.equals("")) {
 				cards.add(new Card(strCard));
 			}
 		}

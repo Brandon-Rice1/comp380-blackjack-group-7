@@ -43,7 +43,7 @@ public class Card {
 	 * Creates a new card based off of the standard hex format for the class. For
 	 * example, the input 1F0B9 would create a card with the type Nine and value 9.
 	 * 
-	 * @param cardData the raw hexidecimal input as a string
+	 * @param cardData the raw hexadecimal input as a string
 	 */
 	public Card(String cardData) {
 		// HexFormat converts the hex string for the card value to an integer

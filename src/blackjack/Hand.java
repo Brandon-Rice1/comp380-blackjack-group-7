@@ -18,8 +18,11 @@ public class Hand {
 	 * should never be modified once it is set
 	 */
 	private List<Card> hand = new ArrayList<>();
-	
-	private HashMap<Integer, Integer> cardCounts = new HashMap<Integer, Integer>(10);
+
+	/**
+	 *  represents the map of the counts of different types of cards
+	 */
+	private HashMap<Integer, Integer> cardCounts = new HashMap<>(10);
 
 	/**
 	 * true if this hand contains an Ace, false if it does not

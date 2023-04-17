@@ -2,28 +2,56 @@ package blackjack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
+
+/**
+ * represents a state of the game
+ */
 public class GameState {
-
+	/**
+	 * represents the hand of the game
+	 */
 	private Hand hand;
-
+	/**
+	 * represents the dealer of the game
+	 */
 	private Hand dealer;
-
+	/**
+	 * represent other players of the game
+	 */
 	private Hand others;
-	
-	private int numCards = 0;
-	
-	private HashMap<Integer, Integer> cardsRemaining = new HashMap<Integer, Integer>(13); 
-
+	/**
+	 * represents the number of card
+	 */
+	private int numCards;
+	/**
+	 * represents the map of the counts of different types of remaining cards
+	 */
+	private HashMap<Integer, Integer> cardsRemaining = new HashMap<>(13);
+	/**
+	 * a list of all cards
+	 */
 	private ArrayList<Card> combinedCardState = new ArrayList<>();
-	
+
+	/**
+	 * initialize next game state to null
+	 */
 	public GameState next = null;
-	
+	/**
+	 * initialize previous game state to null
+	 */
 	public GameState prev = null;
-	
+	/**
+	 * initialize last move to null
+	 */
 	public Move lastMove = null;
 
+	/**
+	 * construct a game state
+	 * @param dealer cards on the hand of the dealer of the game
+	 * @param hand cards on the hand of the game
+	 * @param others cards on the hand of other players of the game
+	 */
 	public GameState(Hand dealer, Hand hand, Hand others) {
 		for (int j = 1; j <= 14; j++) {
 			if (j == 12) {
@@ -56,7 +84,12 @@ public class GameState {
 			}
 		}
 	}
-	
+
+	/**
+	 * update the cards of the hand of the game
+	 * @param card the card that needs to be added to the hand
+	 * @return the game state after the updation
+	 */
 	public GameState updateHand(Card card) {
 		Hand tempHand = new Hand(this.hand.getHand());
 		tempHand.addCard(card);
@@ -67,7 +100,12 @@ public class GameState {
 		temp.next = this.next;
 		return temp;
 	}
-	
+
+	/**
+	 * update the cards of the dealer of the game
+	 * @param card the card that needs to be added to the dealer
+	 * @return the game state after the updation
+	 */
 	public GameState updateDealer(Card card) {
 		Hand tempDealer = new Hand(this.dealer.getHand());
 		tempDealer.addCard(card);
@@ -78,7 +116,12 @@ public class GameState {
 		temp.next = this.next;
 		return temp;
 	}
-	
+
+	/**
+	 * update the cards of others of the game
+	 * @param card the card that needs to be added to others
+	 * @return the game state after the updation
+	 */
 	public GameState updateOthers(Card card) {
 		Hand tempOthers = new Hand(this.others.getHand());
 		tempOthers.addCard(card);
@@ -87,27 +130,52 @@ public class GameState {
 		temp.next = this.next;
 		return temp;
 	}
-	
+
+	/**
+	 * get cards on the hand
+	 * @return cards on the hand
+	 */
 	public Hand getHand() {
 		return hand;
 	}
 
+	/**
+	 * get cards of the dealer
+	 * @return cards of the dealer
+	 */
 	public Hand getDealer() {
 		return dealer;
 	}
 
+	/**
+	 * get the cards of others
+	 * @return the cards of others
+	 */
 	public Hand getOthers() {
 		return others;
 	}
-	
+
+	/**
+	 * get the number of cards
+	 * @return the number of cards
+	 */
 	public int getNumCards() {
 		return numCards;
 	}
 
+	/**
+	 * get the map of counts of remaining cards
+	 * @return the map of counts of remaining cards
+	 */
 	public HashMap<Integer, Integer> getCardsRemaining() {
 		return cardsRemaining;
 	}
-	
+
+	/**
+	 * compare whether two game states are equal
+	 * @param o a given object to compare
+	 * @return whether two game states are equal
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (o == this) {
@@ -120,6 +188,10 @@ public class GameState {
 		return (this.hand == state2.hand && this.dealer == state2.dealer && this.others == state2.others);
 	}
 
+	/**
+	 * get the hash code of the combine card state
+	 * @return the hash code of the combine card state
+	 */
 	@Override
 	public int hashCode() {
 //		var temp = new ArrayList<Card>();
