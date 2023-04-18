@@ -40,7 +40,10 @@ public class Hand {
 	 * @param input an arraylist of card objects
 	 */
 	public Hand(List<Card> input) {
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 1; i <= 14; i++) {
+			if (i == 12) {
+				continue;
+			}
 			cardCounts.put(i, 0);
 		}
 		hand.addAll(input);

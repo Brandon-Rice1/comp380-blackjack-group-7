@@ -678,7 +678,16 @@ public class Solver {
 			// update hand and deck appropriately
 			Card card = new Card(entry.getKey());
 			// recursively call this function
-			hitOutcome += (entry.getValue()/position.getNumCards() * getDescendentScore(position.updateHand(card), Move.HIT));
+			try {
+				hitOutcome += (entry.getValue()/position.getNumCards() * getDescendentScore(position.updateHand(card), Move.HIT));
+			} catch (NullPointerException e) {
+				System.out.println("ERROR: NullPointerException");
+				System.out.println("\tHand: " + position.getHand());
+				System.out.println("\tCard: " + card);
+				System.out.println("\tEntry: " + entry);
+				e.printStackTrace();
+			}
+			
 		}
 		if (hitOutcome >= scoreOutcome) {
 			scoreOutcome = hitOutcome;
@@ -993,6 +1002,8 @@ public class Solver {
 //		}).collect(Collectors.joining("\r\n"));
 		String output = readIn.lines().parallel().map((elem) -> {
 			if (elem.startsWith(",,")) {
+				testCount.set(testCount.get() + 1);
+				System.out.println("init line " + testCount.get());
 				final GameState initial = loadGameState(elem);
 				getDescendentScore(initial, Move.HIT);
 				ArrayList<Card> drawnCards = new ArrayList<>();
@@ -1002,6 +1013,7 @@ public class Solver {
 				Random rndSeed = new Random();
 				double wikiOut = 0.0;
 				double idealOut = 0.0;
+				System.out.println("running sim for line " + testCount.get());
 				for (int i = 0; i < 100; i++) {
 					long seed = rndSeed.nextLong();
 					Random rnd1 = new Random(seed);
