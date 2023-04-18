@@ -1088,8 +1088,8 @@ public class Solver {
 				double idealOut = 0.0;
 				System.out.println("running sim for line " + testCount.get());
 				for (int i = 0; i < 100; i++) {
-//					long seed = rndSeed.nextLong();
-					long seed = 6540380790926622057L;
+					long seed = rndSeed.nextLong();
+//					long seed = 6540380790926622057L;
 					System.out.println(seed);
 					Random rnd1 = new Random(seed);
 					Random rnd2 = new Random(seed);
