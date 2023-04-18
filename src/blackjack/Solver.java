@@ -184,7 +184,8 @@ public class Solver {
 			if (hand.getHardTotal() == 21) {
 				lookup = "STAY";
 			} else if (hand.getHardTotal() > 21) {
-				throw new IllegalArgumentException();
+				lookup = "STAY";
+//				throw new IllegalArgumentException();
 			} else {
 				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftTotal() - 2];
 			}
@@ -228,6 +229,7 @@ public class Solver {
 	}
 	
 	private static Double wikiStrat(Hand dealer, Hand hand, Deck deck) {
+		assert (dealer.getHand().size() == 1);
 		// logic to decide next move and recursion
 		String lookup = "";
 		if (hand.getHand().size() == 2 && hand.getHand().get(0).getType() == hand.getHand().get(1).getType()) {
@@ -247,8 +249,16 @@ public class Solver {
 			if (hand.getHardTotal() == 21) {
 				lookup = "STAY";
 			} else if (hand.getHardTotal() > 21) {
-				throw new IllegalArgumentException();
+				// if here, last move must have been a hit
+				return -1.0;
+//				System.out.println("ERROR: hand total too great");
+//				System.out.println(hand.toString());
+//				throw new IllegalArgumentException();
 			} else {
+				if ((hand.getHardTotal()) - 5 > 16 || dealer.getSoftTotal() > 9) {
+					System.out.println(hand);
+					System.out.println(dealer);
+				}
 				lookup = hard[(hand.getHardTotal()) - 5][dealer.getSoftTotal() - 2];
 			}
 		}
@@ -328,8 +338,20 @@ public class Solver {
 		GameState position = new GameState(dealer, hand, others);
 		Move move = moveOutcomes.get(position);
 		if (move == null) {
+			System.out.println("Move is null for this position: ");
+			System.out.println("\tHand: " + position.getHand());
+			System.out.println("\tDealer: " + position.getDealer());
+			System.out.println("\tOthers: " + position.getOthers());
+			System.out.println(accOutcomes.get(position));
 			getDescendentScore(position, Move.HIT);
 			move = moveOutcomes.get(position);
+		}
+		if (move == null) {
+			System.out.println("Move is STILL null for this position: ");
+			System.out.println("\tHand: " + position.getHand());
+			System.out.println("\tDealer: " + position.getDealer());
+			System.out.println("\tOthers: " + position.getOthers());
+			System.out.println(accOutcomes.get(position));
 		}
 		// based on the move to make, make that move
 		switch(move) {
@@ -404,6 +426,9 @@ public class Solver {
 				// for splitting, like hitting, except there is a recursive call to this function for every possible combination of 2 hands
 					// note that each hand can be evaluated independently* and the results added
 					// *except for the part where both hands need to play before the dealer goes...
+		System.out.println("\tHand: " + position.getHand());
+		System.out.println("\tDealer: " + position.getDealer());
+		System.out.println("\tOthers: " + position.getOthers());
 		if (accOutcomes.containsKey(position)) {
 			return accOutcomes.get(position); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
 		}
@@ -412,8 +437,14 @@ public class Solver {
 		Hand others = position.getOthers();
 		// if we have busted, there is no point in continuing since we lose
 		if ((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
-			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
-			accOutcomes.put(position, outcome);
+//			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
+//			accOutcomes.put(position, outcome);
+			double outcome = dealerPossibilities(position, move);
+			if (accOutcomes.get(position) == null || accOutcomes.get(position) < outcome) {
+				accOutcomes.put(position, outcome);
+				moveOutcomes.put(position, move);
+			}
+//			accOutcomes.put(position, outcome);
 			return outcome;
 		}
 		double scoreOutcome = Double.MIN_VALUE;
@@ -434,6 +465,7 @@ public class Solver {
 				// should be the same in both cases, but the chance of winning will vary depending on each hand
 			
 			if (hand.getHand().get(0) == hand.getHand().get(1)) {
+				System.out.println("running split...");
 				double splitScore = 0.0;
 				var tempSet = cardCounts.entrySet();
 				for (var entry1 : tempSet) {
@@ -646,6 +678,7 @@ public class Solver {
 			}
 
 			// check doubling outcomes
+			System.out.println("running double...");
 			double doubleOutcome = 0.0;
 			var tempSet = cardCounts.entrySet();
 			// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
@@ -664,6 +697,7 @@ public class Solver {
 		}
 		
 		// check staying outcomes
+//		System.out.println("running stay...");
 		double stayOutcome = dealerPossibilities(position, Move.STAY);
 		if (stayOutcome >= scoreOutcome) {
 			scoreOutcome = stayOutcome;
@@ -671,10 +705,15 @@ public class Solver {
 		}
 		
 		// check hitting outcomes
+//		System.out.println("running hit (recurse)...");
 		double hitOutcome = 0.0;
 		var tempSet = cardCounts.entrySet();
 		// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
 		for (var entry : tempSet) {
+			if (entry.getValue() <= 0) {
+				continue;
+			}
+//			System.out.println(position.getHand());
 			// update hand and deck appropriately
 			Card card = new Card(entry.getKey());
 			// recursively call this function
@@ -708,10 +747,11 @@ public class Solver {
 		if (accOutcomes.containsKey(position)) {
 			return accOutcomes.get(position).doubleValue(); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
 		}
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		double output = 0.0;
 		// dealer no longer wants to take cards; evaluate the outcomes
-		if ((dealer.hasAce() && dealer.getSoftTotal() > 17) || dealer.getHardTotal() >= 17) { // dealer is done; eval outcome time
-			int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		if (handTotal > 21 || ((dealer.hasAce() && dealer.getSoftTotal() > 17) || dealer.getHardTotal() >= 17)) { // dealer is done; eval outcome time
+			
 			int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
 			if(handTotal > 21) { // we busted
 				output = -1;
@@ -731,7 +771,11 @@ public class Solver {
 				System.out.println("\tDealer: " + dealer.toString());
 			}
 			output = (move == Move.DOUBLE ? output * 2 : output);
-			accOutcomes.put(position, output);
+			if (accOutcomes.get(position) != null && accOutcomes.get(position) < output) {
+				accOutcomes.put(position, output);
+				moveOutcomes.put(position, move);
+			}
+//			accOutcomes.put(position, output);
 			return output;
 		}
 		// try every possible card draw for the dealer
@@ -1016,14 +1060,24 @@ public class Solver {
 				System.out.println("running sim for line " + testCount.get());
 				for (int i = 0; i < 100; i++) {
 					long seed = rndSeed.nextLong();
+					System.out.println(seed);
 					Random rnd1 = new Random(seed);
 					Random rnd2 = new Random(seed);
 					Deck deck1 = new Deck(drawnCards);
 					Deck deck2 = new Deck(drawnCards);
 					deck1.shuffle(rnd1);
 					deck2.shuffle(rnd2);
-					wikiOut += wikiStrat(initial.getDealer(), initial.getHand(), deck1);
-					idealOut += strategyIdeal(initial.getDealer(), initial.getHand(), initial.getOthers(), deck2);
+					Hand tempDealer1 = new Hand(List.of(initial.getDealer().getHand().get(0)));
+					Hand tempDealer2 = new Hand(List.of(initial.getDealer().getHand().get(0)));
+					Hand tempHand1 = new Hand(List.of(initial.getHand().getHand().get(0), initial.getHand().getHand().get(1)));
+					Hand tempHand2 = new Hand(List.of(initial.getHand().getHand().get(0), initial.getHand().getHand().get(1)));
+					ArrayList<Card> temp2 = new ArrayList<>();
+					for (Card card : initial.getOthers().getHand()) {
+						temp2.add(card);
+					}
+					Hand tempOthers2 = new Hand(temp2);
+					wikiOut += wikiStrat(tempDealer1, tempHand1, deck1);
+					idealOut += strategyIdeal(tempDealer2, tempHand2, tempOthers2, deck2);
 				}
 				// accOutcomes only needs to run once since the output is always the same
 				return ((idealOut / 100) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
@@ -1073,6 +1127,8 @@ public class Solver {
 				cards.add(new Card(strCard));
 			}
 		}
+		cards.removeAll(hand1.getHand());
+		cards.removeAll(dealer1.getHand());
 		// make "hands" of the other player cards
 		Hand others1 = new Hand(cards);
 		return new GameState(dealer1, hand1, others1);
