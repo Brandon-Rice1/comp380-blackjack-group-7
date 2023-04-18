@@ -337,6 +337,7 @@ public class Solver {
 		// lookup the next move given our position; if null, run the code to make it not null
 		GameState position = new GameState(dealer, hand, others);
 		Move move = moveOutcomes.get(position);
+		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		if (move == null) {
 			System.out.println("Move is null for this position: ");
 			System.out.println("\tHand: " + position.getHand());
@@ -347,7 +348,12 @@ public class Solver {
 			System.out.println(accOutcomes.get(position));
 			System.out.println(moveOutcomes.containsKey(position));
 			System.out.println(moveOutcomes.get(position));
-			getDescendentScore(position, Move.STAY);
+			if (handTotal > 21) {
+				accOutcomes.put(position, -1.0);
+				moveOutcomes.put(position, Move.STAY);
+			} else {
+				getDescendentScore(position, Move.STAY);
+			}
 			move = moveOutcomes.get(position);
 			System.out.println(accOutcomes.containsKey(position));
 			System.out.println(accOutcomes.get(position));
@@ -400,7 +406,7 @@ public class Solver {
 		}
 		double output = 0.0;
 		// evaluate how this hand did
-		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+//		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
 		if(handTotal > 21) { // we busted
 			output = -1;
