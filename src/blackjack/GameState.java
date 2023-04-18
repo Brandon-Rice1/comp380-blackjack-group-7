@@ -2,12 +2,20 @@ package blackjack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 
 /**
  * represents a state of the game
  */
 public class GameState {
+	
+	private static final Map<Cardtype, Integer> type2hex = Map.ofEntries(Map.entry(Cardtype.Ace, 1),
+			Map.entry(Cardtype.Two, 2), Map.entry(Cardtype.Three, 3), Map.entry(Cardtype.Four, 4),
+			Map.entry(Cardtype.Five, 5), Map.entry(Cardtype.Six, 6), Map.entry(Cardtype.Seven, 7),
+			Map.entry(Cardtype.Eight, 8), Map.entry(Cardtype.Nine, 9), Map.entry(Cardtype.Ten, 10),
+			Map.entry(Cardtype.Jack, 11), Map.entry(Cardtype.Queen, 13), Map.entry(Cardtype.King, 14));
+	
 	/**
 	 * represents the hand of the game
 	 */
@@ -80,7 +88,8 @@ public class GameState {
 		numCards = 52 - (combinedCardState.size() - 2);
 		for (Card card : combinedCardState) {
 			if (card != null) {
-				cardsRemaining.put(card.getHardValue(), cardsRemaining.get(card.getHardValue()) - 1);
+				cardsRemaining.put(type2hex.get(card.getType()), cardsRemaining.get(type2hex.get(card.getType()))-1);
+//				cardsRemaining.put(card.getHardValue(), cardsRemaining.get(card.getHardValue()) - 1);
 			}
 		}
 	}
@@ -185,7 +194,7 @@ public class GameState {
 			return false;
 		}
 		GameState state2 = (GameState) o;
-		return (this.hand == state2.hand && this.dealer == state2.dealer && this.others == state2.others);
+		return (this.hand == state2.hand && this.dealer == state2.dealer && this.others == state2.others) || (this.hashCode() == state2.hashCode());
 	}
 
 	/**
@@ -196,6 +205,11 @@ public class GameState {
 	public int hashCode() {
 //		var temp = new ArrayList<Card>();
 		return this.combinedCardState.hashCode();
+	}
+	
+	@Override
+	public String toString() {
+		return "\tHand: " + this.getHand() + "\n\tDealer: " + this.getDealer() + "\n\tOthers: " + this.getOthers();
 	}
 
 }

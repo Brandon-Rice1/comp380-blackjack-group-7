@@ -342,9 +342,17 @@ public class Solver {
 			System.out.println("\tHand: " + position.getHand());
 			System.out.println("\tDealer: " + position.getDealer());
 			System.out.println("\tOthers: " + position.getOthers());
+			System.out.println("\t" + position.hashCode());
+			System.out.println(accOutcomes.containsKey(position));
 			System.out.println(accOutcomes.get(position));
-			getDescendentScore(position, Move.HIT);
+			System.out.println(moveOutcomes.containsKey(position));
+			System.out.println(moveOutcomes.get(position));
+			getDescendentScore(position, Move.STAY);
 			move = moveOutcomes.get(position);
+			System.out.println(accOutcomes.containsKey(position));
+			System.out.println(accOutcomes.get(position));
+			System.out.println(moveOutcomes.containsKey(position));
+			System.out.println(moveOutcomes.get(position));
 		}
 		if (move == null) {
 			System.out.println("Move is STILL null for this position: ");
@@ -426,10 +434,12 @@ public class Solver {
 				// for splitting, like hitting, except there is a recursive call to this function for every possible combination of 2 hands
 					// note that each hand can be evaluated independently* and the results added
 					// *except for the part where both hands need to play before the dealer goes...
-		System.out.println("\tHand: " + position.getHand());
-		System.out.println("\tDealer: " + position.getDealer());
-		System.out.println("\tOthers: " + position.getOthers());
-		if (accOutcomes.containsKey(position)) {
+		if (position.getHand().getHand().size() == 2) {
+			System.out.println("\tHand: " + position.getHand());
+			System.out.println("\tDealer: " + position.getDealer());
+			System.out.println("\tOthers: " + position.getOthers());
+		}
+		if (accOutcomes.get(position) != null) {
 			return accOutcomes.get(position); // NEEDS TO BE CHANGED TO REFLECT MOVE INFO TOO?
 		}
 		Hand hand = position.getHand();
@@ -447,7 +457,7 @@ public class Solver {
 //			accOutcomes.put(position, outcome);
 			return outcome;
 		}
-		double scoreOutcome = Double.MIN_VALUE;
+		double scoreOutcome = Integer.MIN_VALUE;
 		Move moveOutcome = null;
 		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
 		if (hand.getHand().size() == 2) {
@@ -702,6 +712,10 @@ public class Solver {
 		if (stayOutcome >= scoreOutcome) {
 			scoreOutcome = stayOutcome;
 			moveOutcome = Move.STAY;
+		} else {
+			if (hand.getHand().size() == 3) {
+				System.out.println("Found " + stayOutcome + " < " + scoreOutcome);
+			}
 		}
 		
 		// check hitting outcomes
@@ -716,6 +730,9 @@ public class Solver {
 //			System.out.println(position.getHand());
 			// update hand and deck appropriately
 			Card card = new Card(entry.getKey());
+			if (card.getHardValue() == 6 && hand.getHand().size() == 2) {
+				System.out.println("HERE IS A CASE THAT WORKS!!!");
+			}
 			// recursively call this function
 			try {
 				hitOutcome += (entry.getValue()/position.getNumCards() * getDescendentScore(position.updateHand(card), Move.HIT));
@@ -731,6 +748,12 @@ public class Solver {
 		if (hitOutcome >= scoreOutcome) {
 			scoreOutcome = hitOutcome;
 			moveOutcome = Move.HIT;
+		}
+		if (hand.getHand().size() == 2) {
+			System.out.println("position: ");
+			System.out.println(position);
+			System.out.println("\t" + moveOutcome);
+			System.out.println("\t" + position.hashCode());
 		}
 		accOutcomes.put(position, scoreOutcome);
 		moveOutcomes.put(position, moveOutcome);
@@ -750,7 +773,7 @@ public class Solver {
 		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		double output = 0.0;
 		// dealer no longer wants to take cards; evaluate the outcomes
-		if (handTotal > 21 || ((dealer.hasAce() && dealer.getSoftTotal() > 17) || dealer.getHardTotal() >= 17)) { // dealer is done; eval outcome time
+		if (((dealer.hasAce() && dealer.getSoftTotal() > 17) || dealer.getHardTotal() >= 17)) { // dealer is done; eval outcome time
 			
 			int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
 			if(handTotal > 21) { // we busted
@@ -771,10 +794,10 @@ public class Solver {
 				System.out.println("\tDealer: " + dealer.toString());
 			}
 			output = (move == Move.DOUBLE ? output * 2 : output);
-			if (accOutcomes.get(position) != null && accOutcomes.get(position) < output) {
-				accOutcomes.put(position, output);
-				moveOutcomes.put(position, move);
-			}
+//			if (accOutcomes.get(position) == null || accOutcomes.get(position) < output) {
+//				accOutcomes.put(position, output);
+//				moveOutcomes.put(position, move);
+//			}
 //			accOutcomes.put(position, output);
 			return output;
 		}
@@ -1059,7 +1082,8 @@ public class Solver {
 				double idealOut = 0.0;
 				System.out.println("running sim for line " + testCount.get());
 				for (int i = 0; i < 100; i++) {
-					long seed = rndSeed.nextLong();
+//					long seed = rndSeed.nextLong();
+					long seed = 6540380790926622057L;
 					System.out.println(seed);
 					Random rnd1 = new Random(seed);
 					Random rnd2 = new Random(seed);
@@ -1127,8 +1151,11 @@ public class Solver {
 				cards.add(new Card(strCard));
 			}
 		}
-		cards.removeAll(hand1.getHand());
-		cards.removeAll(dealer1.getHand());
+		cards.remove(yourCard1);
+		cards.remove(yourCard2);
+		cards.remove(dealerCard);
+//		cards.removeAll(hand1.getHand());
+//		cards.removeAll(dealer1.getHand());
 		// make "hands" of the other player cards
 		Hand others1 = new Hand(cards);
 		return new GameState(dealer1, hand1, others1);
