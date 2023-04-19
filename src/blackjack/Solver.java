@@ -531,8 +531,9 @@ public class Solver {
 					continue;
 				}
 				Card card = new Card(entry.getKey());
-				doubleOutcome += (entry.getValue()/(position.getNumCards()-1) * dealerPossibilities(position.updateHand(card), Move.DOUBLE));
+				doubleOutcome += (entry.getValue() * dealerPossibilities(position.updateHand(card), Move.DOUBLE));
 			}
+			doubleOutcome /= (position.getNumCards()-1);
 			if (doubleOutcome >= scoreOutcome) {
 				scoreOutcome = doubleOutcome;
 				moveOutcome = Move.DOUBLE;
@@ -545,10 +546,6 @@ public class Solver {
 		if (stayOutcome >= scoreOutcome) {
 			scoreOutcome = stayOutcome;
 			moveOutcome = Move.STAY;
-		} else {
-			if (hand.getHand().size() == 3) {
-				System.out.println("Found " + stayOutcome + " < " + scoreOutcome);
-			}
 		}
 		
 		// check hitting outcomes
@@ -563,12 +560,13 @@ public class Solver {
 //			System.out.println(position.getHand());
 			// update hand and deck appropriately
 			Card card = new Card(entry.getKey());
-			if (card.getHardValue() == 6 && hand.getHand().size() == 2) {
-				System.out.println("HERE IS A CASE THAT WORKS!!!");
-			}
+//			if (card.getHardValue() == 6 && hand.getHand().size() == 2) {
+//				System.out.println("HERE IS A CASE THAT WORKS!!!");
+//			}
 			// recursively call this function
 			try {
-				hitOutcome += (entry.getValue()/position.getNumCards() * getDescendentScore(position.updateHand(card), Move.HIT));
+//				double temp = 
+				hitOutcome += entry.getValue() * getDescendentScore(position.updateHand(card), Move.HIT);
 			} catch (NullPointerException e) {
 				System.out.println("ERROR: NullPointerException");
 				System.out.println("\tHand: " + position.getHand());
@@ -578,6 +576,7 @@ public class Solver {
 			}
 			
 		}
+		hitOutcome /= (position.getNumCards()-1);
 		if (hitOutcome >= scoreOutcome) {
 			scoreOutcome = hitOutcome;
 			moveOutcome = Move.HIT;
@@ -746,17 +745,18 @@ public class Solver {
 				if (position.next == null) {
 					// if evaluating terminating hand, evaluate all outcomes
 					GameState tempPos = head;
-					while (tempPos.next != null) {
-						doubleOutcome += (entry.getValue()/(position.getNumCards()-1) * dealerPossibilities(tempPos.updateOthers(card), tempPos.lastMove));
-					}
 					position.lastMove = Move.DOUBLE;
-					doubleOutcome += (entry.getValue()/(position.getNumCards()-1) * dealerPossibilities(position.updateHand(card), Move.DOUBLE));
+					while (tempPos.next != null) {
+						doubleOutcome += (entry.getValue() * dealerPossibilities(tempPos.updateOthers(card), tempPos.lastMove));
+					}
+//					doubleOutcome += (entry.getValue()/(position.getNumCards()-1) * dealerPossibilities(position.updateHand(card), Move.DOUBLE));
 				} else {
 					// if evaluating non-terminating hand, recurse
 					position.lastMove = Move.DOUBLE;
 					doubleOutcome += getSplitScore(position.next.updateOthers(card), Move.SPLIT, head);
 				}
 			}
+			doubleOutcome /= position.getNumCards();
 			if (doubleOutcome >= scoreOutcome) {
 				scoreOutcome = doubleOutcome;
 				moveOutcome = Move.DOUBLE;
@@ -795,27 +795,28 @@ public class Solver {
 				if ((newPosition.getHand().getSoftTotal() > 21 ? newPosition.getHand().getHardTotal() : newPosition.getHand().getSoftTotal()) > 21) {
 					// scenario 1: hand 1 has busted, recurse on hand 2
 					newPosition.lastMove = Move.HIT;
-					hitOutcome += (entry.getValue()/(newPosition.getNumCards()) * getSplitScore(newPosition.next.updateOthers(card), Move.SPLIT, head));
+					hitOutcome += (entry.getValue() * getSplitScore(newPosition.next.updateOthers(card), Move.SPLIT, head));
 				} else {
 					// scenario 2: hand 1 has not busted, recurse on hand 1 again
-					hitOutcome += (entry.getValue()/(newPosition.getNumCards()) * getSplitScore(newPosition, Move.HIT, head));
+					hitOutcome += (entry.getValue() * getSplitScore(newPosition, Move.HIT, head));
 				}
 			} else {
 				if ((newPosition.getHand().getSoftTotal() > 21 ? newPosition.getHand().getHardTotal() : newPosition.getHand().getSoftTotal()) > 21) {
 					// scenario 3: hand 2 has busted, calculate final scores
 					GameState tempPos = head;
 					while (tempPos.next != null) {
-						hitOutcome += (entry.getValue()/(newPosition.getNumCards()) * dealerPossibilities(tempPos.updateOthers(card), tempPos.lastMove));
+						hitOutcome += (entry.getValue() * dealerPossibilities(tempPos.updateOthers(card), tempPos.lastMove));
 					}
 					position.lastMove = Move.HIT;
-					hitOutcome += (entry.getValue()/(newPosition.getNumCards()) * dealerPossibilities(newPosition, Move.HIT));
+					hitOutcome += (entry.getValue() * dealerPossibilities(newPosition, Move.HIT));
 				} else {
 					// scenario 4: hand 2 has not busted, recurse on hand 2 again
-					hitOutcome += (entry.getValue()/(newPosition.getNumCards()) * getSplitScore(newPosition, Move.HIT, head));
+					hitOutcome += (entry.getValue() * getSplitScore(newPosition, Move.HIT, head));
 				}
 			}
 			// each iteration of the loop adds the averaged score for that outcome, weighted based on all possible outcomes
 		}
+		hitOutcome /= position.getNumCards();
 		if (hitOutcome >= scoreOutcome) {
 			scoreOutcome = hitOutcome;
 			moveOutcome = Move.HIT;
