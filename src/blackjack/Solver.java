@@ -250,7 +250,8 @@ public class Solver {
 				lookup = "STAY";
 			} else if (hand.getHardTotal() > 21) {
 				// if here, last move must have been a hit
-				return -1.0;
+				lookup = "STAY";
+//				return -1.0;
 //				System.out.println("ERROR: hand total too great");
 //				System.out.println(hand.toString());
 //				throw new IllegalArgumentException();
@@ -306,17 +307,17 @@ public class Solver {
 		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
 		if(handTotal > 21) { // we busted
-			output = -1;
+			output = -1.0;
 		} else if(dealerTotal > handTotal && dealerTotal <= 21) { // dealer won
-			output = -1;
+			output = -1.0;
 		} else if (dealerTotal == handTotal) { // tie
-			output = 0;
+			output = 0.0;
 		} else if(hand.getSoftTotal() == 21 && hand.getHand().size() == 2) { // we got a blackjack
 			output = 1.5;
 		} else if(dealer.getHardTotal() > 21) { // dealer busted
-			output = 1;
+			output = 1.0;
 		} else if(dealerTotal < handTotal){ // we won
-			output = 1;
+			output = 1.0;
 		} else { // an outcome that should not be possible
 			System.out.println("Something went wrong when evaluating outcomes:");
 			System.out.println("\tHand: " + hand.toString());
@@ -348,12 +349,12 @@ public class Solver {
 			System.out.println(accOutcomes.get(position));
 			System.out.println(moveOutcomes.containsKey(position));
 			System.out.println(moveOutcomes.get(position));
-			if (handTotal > 21) {
-				accOutcomes.put(position, -1.0);
-				moveOutcomes.put(position, Move.STAY);
-			} else {
+//			if (handTotal > 21 && !accOutcomes.containsKey(position)) {
+//				accOutcomes.put(position, -1.0);
+//				moveOutcomes.put(position, Move.STAY);
+//			} else {
 				getDescendentScore(position, Move.STAY);
-			}
+//			}
 			move = moveOutcomes.get(position);
 			System.out.println(accOutcomes.containsKey(position));
 			System.out.println(accOutcomes.get(position));
@@ -406,7 +407,7 @@ public class Solver {
 		}
 		double output = 0.0;
 		// evaluate how this hand did
-//		int handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
+		handTotal = hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal();
 		int dealerTotal = dealer.getSoftTotal() > 21 ? dealer.getHardTotal() : dealer.getSoftTotal();
 		if(handTotal > 21) { // we busted
 			output = -1;
@@ -455,7 +456,7 @@ public class Solver {
 		if ((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
 //			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
 //			accOutcomes.put(position, outcome);
-			double outcome = dealerPossibilities(position, move);
+			double outcome = dealerPossibilities(position, (move == Move.DOUBLE ? move : Move.STAY));
 			if (accOutcomes.get(position) == null || accOutcomes.get(position) < outcome) {
 				accOutcomes.put(position, outcome);
 				moveOutcomes.put(position, move);
@@ -463,6 +464,8 @@ public class Solver {
 //			accOutcomes.put(position, outcome);
 			return outcome;
 		}
+		double splitScore = 0.0;
+		double doubleOutcome = 0.0;
 		double scoreOutcome = Integer.MIN_VALUE;
 		Move moveOutcome = null;
 		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
@@ -482,7 +485,7 @@ public class Solver {
 			
 			if (hand.getHand().get(0) == hand.getHand().get(1)) {
 				System.out.println("running split...");
-				double splitScore = 0.0;
+//				double splitScore = 0.0;
 				var tempSet = cardCounts.entrySet();
 				for (var entry1 : tempSet) {
 					if (entry1.getValue() == 0) {
@@ -497,194 +500,18 @@ public class Solver {
 						// draw new cards for both hands, update the states to reflect the new missing cards
 						Hand hand1 = new Hand(List.of(hand.getHand().get(0), new Card(entry1.getKey())));
 						Hand hand2 = new Hand(List.of(hand.getHand().get(0), new Card(entry2.getKey())));
-//						Hand hand3 = null;
-//						Hand hand4 = null;
-//						// if the new hand can split again, need to recurse and go again
-//						if (hand1.getHand().get(0) == hand1.getHand().get(1)) {
-//							for (var entry3 : tempSet) {
-//								if (entry3.getValue() == 0 || 
-//										(entry3.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//										(entry3.getKey() == entry1.getKey() && tempCount1 == 0)) {
-//									continue;
-//								}
-//								int tempCount3 = (entry3.getKey() == entry2.getKey() ? tempCount2 - 1 : (entry3.getKey() == entry1.getKey() ? tempCount1 - 1 : entry3.getValue() - 1));
-//								for (var entry4 : tempSet) {
-//									if (entry4.getValue() == 0 || 
-//											(entry4.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//											(entry4.getKey() == entry1.getKey() && tempCount1 == 0) ||
-//											(entry4.getKey() == entry3.getKey() && tempCount3 == 0)) {
-//										continue;
-//									}
-//									hand1 = new Hand(List.of(hand1.getHand().get(0), new Card(entry3.getKey())));
-//									hand3 = new Hand(List.of(hand1.getHand().get(1), new Card(entry3.getKey())));
-//									// if, in addition to the first split, the second hand can split again, continue to split
-//									if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
-//										int tempCount4;
-//										if (entry4.getKey() == entry3.getKey()) {
-//											tempCount4 = tempCount3 - 1;
-//										} else if (entry4.getKey() == entry2.getKey()) {
-//											tempCount4 = tempCount2 - 1;
-//										} else if (entry4.getKey() == entry1.getKey()) {
-//											tempCount4 = tempCount1 - 1;
-//										} else {
-//											tempCount4 = entry4.getValue() - 1;
-//										}
-//										for (var entry5 : tempSet) {
-//											if (entry5.getValue() == 0 || 
-//													(entry5.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//													(entry5.getKey() == entry1.getKey() && tempCount1 == 0) ||
-//													(entry5.getKey() == entry3.getKey() && tempCount3 == 0) || 
-//													(entry5.getKey() == entry4.getKey() && tempCount4 == 0)) {
-//												continue;
-//											}
-//											int tempCount5;
-//											if (entry5.getKey() == entry4.getKey()) {
-//												tempCount5 = tempCount4 - 1;
-//											} else if (entry5.getKey() == entry3.getKey()) {
-//												tempCount5 = tempCount3 - 1;
-//											} else if (entry5.getKey() == entry2.getKey()) {
-//												tempCount5 = tempCount2 - 1;
-//											} else if (entry5.getKey() == entry1.getKey()) {
-//												tempCount5 = tempCount1 - 1;
-//											} else {
-//												tempCount5 = entry5.getValue() - 1;
-//											}
-//											for (var entry6 : tempSet) {
-//												if (entry6.getValue() == 0 || 
-//														(entry6.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//														(entry6.getKey() == entry1.getKey() && tempCount1 == 0) ||
-//														(entry6.getKey() == entry3.getKey() && tempCount3 == 0) || 
-//														(entry6.getKey() == entry4.getKey() && tempCount4 == 0) || 
-//														(entry6.getKey() == entry5.getKey() && tempCount5 == 0)) {
-//													continue;
-//												}
-//												// make all hands and all others accordingly
-//												hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry5.getKey())));
-//												hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry6.getKey())));
-//												Hand dealer1 = new Hand(dealer.getHand());
-//												Hand dealer2 = new Hand(dealer.getHand());
-//												Hand dealer3 = new Hand(dealer.getHand());
-//												Hand dealer4 = new Hand(dealer.getHand());
-//												Hand others1 = new Hand(others.getHand());
-//												others1.addCard(hand2.getHand().get(0));
-//												others1.addCard(hand2.getHand().get(1));
-//												others1.addCard(hand3.getHand().get(0));
-//												others1.addCard(hand3.getHand().get(1));
-//												others1.addCard(hand4.getHand().get(0));
-//												others1.addCard(hand4.getHand().get(1));
-//												Hand others2 = new Hand(others.getHand());
-//												others2.addCard(hand1.getHand().get(1));
-//												others2.addCard(hand1.getHand().get(0));
-//												others2.addCard(hand3.getHand().get(0));
-//												others2.addCard(hand3.getHand().get(1));
-//												others2.addCard(hand4.getHand().get(0));
-//												others2.addCard(hand4.getHand().get(1));
-//												Hand others3 = new Hand(others.getHand());
-//												others3.addCard(hand1.getHand().get(1));
-//												others3.addCard(hand1.getHand().get(0));
-//												others3.addCard(hand2.getHand().get(0));
-//												others3.addCard(hand2.getHand().get(1));
-//												others3.addCard(hand4.getHand().get(0));
-//												others3.addCard(hand4.getHand().get(1));
-//												Hand others4 = new Hand(others.getHand());
-//												others4.addCard(hand1.getHand().get(1));
-//												others4.addCard(hand1.getHand().get(0));
-//												others4.addCard(hand2.getHand().get(0));
-//												others4.addCard(hand2.getHand().get(1));
-//												others4.addCard(hand3.getHand().get(0));
-//												others4.addCard(hand3.getHand().get(1));
-//												GameState position1 = new GameState(hand1, dealer1, others1);
-//												GameState position2 = new GameState(hand2, dealer2, others2);
-//												GameState position3 = new GameState(hand3, dealer3, others3);
-//												GameState position4 = new GameState(hand4, dealer4, others4);
-//												position1.next = position3;
-//												position3.next = position2;
-//												position2.next = position4;
-//												splitScore = getSplitScore(position1, Move.SPLIT, position1);
-//											}
-//										}
-//									} else {
-//										// only the first split hand split again, make all game states
-//										Hand dealer1 = new Hand(dealer.getHand());
-//										Hand dealer3 = new Hand(dealer.getHand());
-//										Hand others1 = new Hand(others.getHand());
-//										others1.addCard(hand3.getHand().get(0));
-//										others1.addCard(hand3.getHand().get(1));
-//										Hand others3 = new Hand(others.getHand());
-//										others3.addCard(hand1.getHand().get(1));
-//										others3.addCard(hand1.getHand().get(0));
-//										GameState position1 = new GameState(hand1, dealer1, others1);
-//										GameState position3 = new GameState(hand3, dealer3, others3);
-//										position1.next = position3;
-//										splitScore = getSplitScore(position1, Move.SPLIT, position1);
-//									}
-//								}
-//							}
-//						} else if (hand2.getHand().get(0) == hand2.getHand().get(1)) {
-//							// only the second hand could split again
-//							for (var entry7 : tempSet) {
-//								if (entry7.getValue() == 0 || 
-//										(entry7.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//										(entry7.getKey() == entry1.getKey() && tempCount1 == 0)) {
-//									continue;
-//								}
-//								int tempCount7;
-//								if (entry7.getKey() == entry2.getKey()) {
-//									tempCount7 = tempCount2 - 1;
-//								} else if (entry7.getKey() == entry1.getKey()) {
-//									tempCount7 = tempCount1 - 1;
-//								} else {
-//									tempCount7 = entry7.getValue() - 1;
-//								}
-//								for (var entry8 : tempSet) {
-//									if (entry8.getValue() == 0 || 
-//											(entry8.getKey() == entry2.getKey() && tempCount2 == 0) || 
-//											(entry8.getKey() == entry1.getKey() && tempCount1 == 0) ||
-//											(entry8.getKey() == entry7.getKey() && tempCount7 == 0)) {
-//										continue;
-//									}
-//									hand2 = new Hand(List.of(hand2.getHand().get(0), new Card(entry7.getKey())));
-//									hand4 = new Hand(List.of(hand2.getHand().get(1), new Card(entry8.getKey())));
-//									Hand dealer1 = new Hand(dealer.getHand());
-//									Hand dealer2 = new Hand(dealer.getHand());
-//									Hand dealer4 = new Hand(dealer.getHand());
-//									Hand others1 = new Hand(others.getHand());
-//									others1.addCard(hand2.getHand().get(0));
-//									others1.addCard(hand2.getHand().get(1));
-//									others1.addCard(hand4.getHand().get(0));
-//									others1.addCard(hand4.getHand().get(1));
-//									Hand others2 = new Hand(others.getHand());
-//									others2.addCard(hand1.getHand().get(1));
-//									others2.addCard(hand1.getHand().get(0));
-//									others2.addCard(hand4.getHand().get(0));
-//									others2.addCard(hand4.getHand().get(1));
-//									Hand others4 = new Hand(others.getHand());
-//									others4.addCard(hand1.getHand().get(1));
-//									others4.addCard(hand1.getHand().get(0));
-//									others4.addCard(hand2.getHand().get(0));
-//									others4.addCard(hand2.getHand().get(1));
-//									GameState position1 = new GameState(hand1, dealer1, others1);
-//									GameState position2 = new GameState(hand2, dealer2, others2);
-//									GameState position4 = new GameState(hand4, dealer4, others4);
-//									position1.next = position2;
-//									position2.next = position4;
-//									splitScore = getSplitScore(position1, Move.SPLIT, position1);
-//								}
-//							}
-//						} else {
-							// there is 1 split, the original one, only
-							Hand dealer2 = new Hand(dealer.getHand());
-							Hand others1 = new Hand(others.getHand());
-							others1.addCard(hand2.getHand().get(0));
-							others1.addCard(hand2.getHand().get(1));
-							List<Card> origOthers = others.getHand();
-							origOthers.addAll(hand1.getHand());
-							Hand others2 = new Hand(origOthers);
-							GameState position1 = new GameState(dealer, hand1, others1);
-							GameState position2 = new GameState(dealer2, hand2, others2);
-							position1.next = position2;
-							splitScore = getSplitScore(position1, Move.SPLIT, position1);
-//						}
+						// there is 1 split, the original one, only
+						Hand dealer2 = new Hand(dealer.getHand());
+						Hand others1 = new Hand(others.getHand());
+						others1.addCard(hand2.getHand().get(0));
+						others1.addCard(hand2.getHand().get(1));
+						List<Card> origOthers = others.getHand();
+						origOthers.addAll(hand1.getHand());
+						Hand others2 = new Hand(origOthers);
+						GameState position1 = new GameState(dealer, hand1, others1);
+						GameState position2 = new GameState(dealer2, hand2, others2);
+						position1.next = position2;
+						splitScore = getSplitScore(position1, Move.SPLIT, position1);
 					}
 				}
 				if (splitScore >= scoreOutcome) {
@@ -695,7 +522,7 @@ public class Solver {
 
 			// check doubling outcomes
 			System.out.println("running double...");
-			double doubleOutcome = 0.0;
+//			double doubleOutcome = 0.0;
 			var tempSet = cardCounts.entrySet();
 			// each key is the numerical card value (1 - 10), each value is the number of cards with that value in the deck (ie 0-4 for 1-9, 0-16 for 10-K)
 			for (var entry : tempSet) {
@@ -815,8 +642,10 @@ public class Solver {
 				continue;
 			}
 			Card card = new Card(entry.getKey());
-			output += (entry.getValue()/(position.getNumCards()-1) * dealerPossibilities(position.updateDealer(card), move));
+			double temp = (entry.getValue()-1) * dealerPossibilities(position.updateDealer(card), move);
+			output += temp;
 		}
+		output = output / position.getNumCards();
 		return output;
 	}
 	
@@ -829,18 +658,32 @@ public class Solver {
 		}
 		// if we have busted, there is no point in continuing since we lose
 //		if ((hand.getSoftTotal() > 21 ? hand.getHardTotal() : hand.getSoftTotal()) > 21) {
-//			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
-//			if (!secondHand) {
-//				outcome += getSplitScore(position1, position2, true, move1, move2);
+////			double outcome = (move == Move.DOUBLE ? -2.0 : -1.0);
+////			accOutcomes.put(position, outcome);
+//			double outcome = 0.0;
+//			if (position.next == null) {
+//				GameState tempPos = head;
+//				position.lastMove = move;
+//				while (tempPos.next != null) {
+//					outcome += dealerPossibilities(tempPos, tempPos.lastMove);
+//				}
+////				stayOutcome += dealerPossibilities(position, Move.STAY);
+//			} else {
+//				position.lastMove = Move.STAY;
+//				outcome += getSplitScore(position.next, Move.SPLIT, head);
 //			}
-//			accOutcomes.put(position, outcome);
+//			if (accOutcomes.get(position) == null || accOutcomes.get(position) < outcome) {
+//				accOutcomes.put(position, outcome);
+//				moveOutcomes.put(position, move);
+//			}
+////			accOutcomes.put(position, outcome);
 //			return outcome;
 //		}
 		double scoreOutcome = Double.MIN_VALUE;
 		Move moveOutcome = null;
 		HashMap<Integer, Integer> cardCounts = position.getCardsRemaining();
 		if (hand.getHand().size() == 2) {
-			scoreOutcome = -0.5;
+			scoreOutcome = -0.5 + (position.next != null ? getSplitScore(position.next, Move.SPLIT, head) : 0.0);
 			moveOutcome = Move.SURRENDER;
 			
 			// all splitting instances created by getDescendentScore
@@ -923,11 +766,11 @@ public class Solver {
 		double stayOutcome = 0.0;
 		if (position.next == null) {
 			GameState tempPos = head;
+			position.lastMove = Move.STAY;
 			while (tempPos.next != null) {
 				stayOutcome += dealerPossibilities(tempPos, tempPos.lastMove);
 			}
-			position.lastMove = Move.STAY;
-			stayOutcome += dealerPossibilities(position, Move.STAY);
+//			stayOutcome += dealerPossibilities(position, Move.STAY);
 		} else {
 			position.lastMove = Move.STAY;
 			stayOutcome += getSplitScore(position.next, Move.SPLIT, head);
@@ -981,7 +824,7 @@ public class Solver {
 			System.out.println("ERROR: a call to getSplitScore returned a value outside of acceptable bounds");
 		}
 		accOutcomes.put(position, scoreOutcome);
-		moveOutcomes.put(position, position.lastMove);
+		moveOutcomes.put(position, moveOutcome);
 		return scoreOutcome;
 	}
 	
@@ -1089,8 +932,8 @@ public class Solver {
 				System.out.println("running sim for line " + testCount.get());
 				for (int i = 0; i < 100; i++) {
 					long seed = rndSeed.nextLong();
-//					long seed = 6540380790926622057L;
-					System.out.println(seed);
+//					long seed = 6126672029307901454L;
+//					System.out.println(seed);
 					Random rnd1 = new Random(seed);
 					Random rnd2 = new Random(seed);
 					Deck deck1 = new Deck(drawnCards);
@@ -1109,8 +952,10 @@ public class Solver {
 					wikiOut += wikiStrat(tempDealer1, tempHand1, deck1);
 					idealOut += strategyIdeal(tempDealer2, tempHand2, tempOthers2, deck2);
 				}
+				idealOut /= 100;
+				wikiOut /= 100;
 				// accOutcomes only needs to run once since the output is always the same
-				return ((idealOut / 100) + "," + (wikiOut / 100) + "," + elem.substring(2, elem.length()));
+				return (idealOut + "," + wikiOut + "," + elem.substring(2, elem.length()));
 			} else {
 				return elem;
 			}
