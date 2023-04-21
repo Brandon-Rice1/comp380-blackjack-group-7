@@ -103,5 +103,10 @@ public class Card {
 		Card card2 = (Card) o;
 		return (this.getType() == card2.getType()) && (this.getHardValue() == card2.getHardValue());
 	}
+	
+	@Override
+	public int hashCode() {
+		return this.type.hashCode();
+	}
 
 }

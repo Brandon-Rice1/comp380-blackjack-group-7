@@ -27,6 +27,10 @@ public class Hand {
 	 * The sum of the hard values of all the cards in this hand
 	 */
 	private int hardTotal = 0;
+	
+	public Hand next = null;
+	public Move lastMove = null;
+	public Hand prev = null;
 
 	/**
 	 * Constructor that takes in an already made arraylist of cards
